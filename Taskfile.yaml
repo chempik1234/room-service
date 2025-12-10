@@ -1,0 +1,10 @@
+version: '3'
+
+tasks:
+  grpc:
+    cmds:
+      - protoc -I .
+        --go_out=./room_service
+        --go-grpc_out=./room_service
+        ./api/room_service/room_service.proto
+    summary: Generate gRPC code from protofile

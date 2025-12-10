@@ -1,4 +1,4 @@
-module room_service
+module github.com/chempik1234/room-service
 
 go 1.25.1
 

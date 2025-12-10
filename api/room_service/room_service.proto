@@ -1,0 +1,163 @@
+syntax = "proto3";
+
+option go_package = "pkg/api/room_service";
+
+package api;
+
+// --------------------- universal types
+enum DateEditMode {
+  SET = 0;
+  DELETE = 1;
+  APPEND = 2;  // for list or map
+}
+
+message Value {
+  oneof value {
+    string string_value = 1;
+    int64 int_value = 2;
+    double float_value = 3;
+    bool bool_value = 4;
+    bytes binary_value = 5;
+    ListValue list_value = 6;
+    MapValue map_value = 7;
+  }
+}
+
+// custom types for Value
+message ListValue {
+  repeated Value values = 1;
+}
+
+message MapValue {
+  map<string, Value> values = 1;
+}
+
+// --------------------- representative messages
+
+message User {
+  string id = 1;
+  string name = 2;
+  map<string, string> metadata = 3; // what if client wants to store some data e.g. avatar id
+  int64 joined_at = 4;
+}
+
+message RoomData {
+  map<string, Value> values = 1;
+  // users are displayed as list in snapshot, not a field of RoomData
+}
+
+// --------------------- command messages
+
+message Command {
+  string command_id = 1; // no-repeat
+  int64 timestamp = 2;
+  string room_id = 3;
+  string user_id = 4;
+
+  oneof payload {// to send various commands as same type Command we use oneof
+    CreateRoomCommandBody create_room = 10;
+    DeleteRoomCommandBody delete_room = 11;
+
+    JoinRoomCommandBody join_room = 20;
+    LeaveRoomCommandBody leave_room = 21;
+
+    SetAppendDeleteDataCommandBody affect_data = 30;  // create, update, delete
+
+    RefreshRoomCommandBody refresh_room = 40;
+  }
+}
+
+// bodies of command: can't be used on their own
+message CreateRoomCommandBody {
+  map<string, string> room_options = 1; // max_users for example
+}
+
+message DeleteRoomCommandBody {
+  bool delete_approve = 1;  // to differ from LeaveRoomCommandBody as it's empty too
+}
+
+message JoinRoomCommandBody {
+  User user_full = 1;
+}
+
+message LeaveRoomCommandBody {
+  bool leave_approve = 1;  // to differ from DeleteRoomCommandBody as it's empty too
+}
+
+message SetAppendDeleteDataCommandBody {
+  string data_id = 1;
+  optional Value data_value = 2;  // no need for delete
+  DateEditMode command_mode = 3;
+}
+
+message RefreshRoomCommandBody {
+  bool refresh_room = 1;
+}
+
+// --------------------- broadcast event messages (we send deltas to users)
+
+message Event {
+  // string event_id = 1;
+  int64 timestamp = 2;
+  string room_id = 3;
+  string user_id = 4;
+
+  oneof payload {// to send various events as same type Event we use oneof
+    RoomCreatedEventBody room_created = 10;
+    RoomDeletedEventBody room_deleted = 11;
+
+    JoinedRoomEventBody joined_room = 20;
+    LeftRoomEventBody left_room = 21;
+
+    DataEditedEventBody data_edited = 30;
+
+    FullRoomSnapshotEventBody full_room = 40;
+  }
+}
+
+// bodies of event: can't be used on their own
+message RoomCreatedEventBody {// for SDK info, user likely won't see this...
+  map<string, string> room_options = 1; // max_users for example
+}
+
+message RoomDeletedEventBody {
+  bool room_deleted = 1;  // to differ from LeftRoomEventBody as it's empty too
+}
+
+message JoinedRoomEventBody {
+  User user_full = 1;
+}
+
+message LeftRoomEventBody {
+  bool left_room = 1;  // to differ from RoomDeletedEventBody as it's empty too
+}
+
+// data edited can be created, edited & deleted
+message DataEditedEventBody {
+  string data_id = 1;
+  optional Value data_value = 2;  // no need for delete
+  DateEditMode command_mode = 3;
+}
+
+message FullRoomSnapshotEventBody {
+  RoomData room = 1;
+  repeated User users = 2;
+}
+
+// --------------------- single command result
+
+message SingleEvent {
+  oneof result {
+    FullRoomSnapshotEventBody full_room = 1;
+    RoomDeletedEventBody room_deleted = 2;
+  }
+}
+
+// --------------------- service
+
+service RoomService {
+  // main life cycle
+  rpc Stream(stream Command) returns (stream Event);
+  // just for fun
+  rpc SingleCommand(Command) returns (SingleEvent);
+}

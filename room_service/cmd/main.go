@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/chempik1234/room-service/internal/config"
+	"github.com/chempik1234/room-service/pkg/api/room_service"
+	"github.com/chempik1234/room-service/pkg/transport/grpc/interceptors"
+	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
 	"github.com/chempik1234/super-danis-library-golang/pkg/server"
 	"github.com/chempik1234/super-danis-library-golang/pkg/server/grpcserver"
-	"github.com/wb-go/wbf/zlog"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"log"
 	"net"
-	"room_service/internal/config"
 )
 
 func main() {
@@ -22,16 +25,15 @@ func main() {
 	//endregion
 
 	//region logger
-	zlog.InitConsole()
-	err = zlog.SetLevel(cfg.Log.LogLevel)
-	if err != nil {
-		log.Fatal(fmt.Errorf("error setting log level to '%s': %w", cfg.Log.LogLevel, err))
-	}
-	zlog.Logger.Info().Msg("logger console init")
+	ctx, _ := logger.New(context.Background())
+
+	logger.GetLoggerFromCtx(ctx).Info(ctx, "logger init")
 	//endregion
 
-	// TODO: replace with gRPC
-	grpcServer := grpc.NewServer()
+	roomServiceServer := ???
+
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.AddLogMiddleware))
+	room_service.RegisterRoomServiceServer(grpcServer, roomServiceServer)
 	appServer := server.NewGracefulServer[*net.Listener](
 		grpcserver.NewGracefulServerImplementationGRPC(grpcServer))
 
@@ -39,19 +41,19 @@ func main() {
 	ctx, stopCtx := context.WithCancel(context.Background())
 	defer stopCtx()
 
-	zlog.Logger.Info().Int("grpc_port", cfg.Service.GRPCPort).Msg("server starting :grpc_port")
+	logger.GetLoggerFromCtx(ctx).Info(ctx, "server starting :grpc_port", zap.Int("grpc_port", cfg.Service.GRPCPort))
 	err = appServer.GracefulRun(ctx, cfg.Service.GRPCPort)
 	//endregion
 
 	//region shutdown
 	if err != nil {
-		zlog.Logger.Error().Msg(fmt.Errorf("http server error: %w", err).Error())
+		logger.GetLoggerFromCtx(ctx).Error(ctx, fmt.Errorf("http server error: %w", err).Error())
 	}
 
-	zlog.Logger.Info().Msg("server gracefully stopped")
+	logger.GetLoggerFromCtx(ctx).Info(ctx, "server gracefully shutdown")
 
 	stopCtx()
-	zlog.Logger.Info().Msg("background operations gracefully stopped")
+	logger.GetLoggerFromCtx(ctx).Info(ctx, "background operations gracefully shutdown")
 	fmt.Println("finish")
 	//endregion
 }

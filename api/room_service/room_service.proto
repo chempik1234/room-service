@@ -5,6 +5,10 @@ option go_package = "pkg/api/room_service";
 package api;
 
 // --------------------- universal types
+message ErrorMessage {
+  string error = 1;
+}
+
 enum DateEditMode {
   SET = 0;
   DELETE = 1;
@@ -38,7 +42,7 @@ message User {
   string id = 1;
   string name = 2;
   map<string, string> metadata = 3; // what if client wants to store some data e.g. avatar id
-  int64 joined_at = 4;
+  // int64 joined_at = 4;
 }
 
 message RoomData {
@@ -51,7 +55,7 @@ message RoomData {
 message Command {
   string command_id = 1; // no-repeat
   int64 timestamp = 2;
-  string room_id = 3;
+  optional string room_id = 3;
   string user_id = 4;
 
   oneof payload {// to send various commands as same type Command we use oneof
@@ -112,6 +116,8 @@ message Event {
     DataEditedEventBody data_edited = 30;
 
     FullRoomSnapshotEventBody full_room = 40;
+
+    ErrorMessage error_message = 50;
   }
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/chempik1234/room-service/internal/config"
+	"github.com/chempik1234/room-service/internal/service"
 	"github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/room-service/pkg/transport/grpc/interceptors"
 	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
@@ -30,7 +31,8 @@ func main() {
 	logger.GetLoggerFromCtx(ctx).Info(ctx, "logger init")
 	//endregion
 
-	roomServiceServer := ???
+	// TODO: roomRepo := commandIDCacheRepo := roomRetryStrategy :=
+	roomServiceServer := service.NewRoomService()
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.AddLogMiddleware))
 	room_service.RegisterRoomServiceServer(grpcServer, roomServiceServer)

@@ -21,7 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// --------------------- universal types
 type DateEditMode int32
 
 const (
@@ -71,6 +70,51 @@ func (DateEditMode) EnumDescriptor() ([]byte, []int) {
 	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{0}
 }
 
+// --------------------- universal types
+type ErrorMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Error         string                 `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ErrorMessage) Reset() {
+	*x = ErrorMessage{}
+	mi := &file_api_room_service_room_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ErrorMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ErrorMessage) ProtoMessage() {}
+
+func (x *ErrorMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_api_room_service_room_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ErrorMessage.ProtoReflect.Descriptor instead.
+func (*ErrorMessage) Descriptor() ([]byte, []int) {
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ErrorMessage) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 type Value struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Value:
@@ -89,7 +133,7 @@ type Value struct {
 
 func (x *Value) Reset() {
 	*x = Value{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[0]
+	mi := &file_api_room_service_room_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -101,7 +145,7 @@ func (x *Value) String() string {
 func (*Value) ProtoMessage() {}
 
 func (x *Value) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[0]
+	mi := &file_api_room_service_room_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -114,7 +158,7 @@ func (x *Value) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Value.ProtoReflect.Descriptor instead.
 func (*Value) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{0}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Value) GetValue() isValue_Value {
@@ -243,7 +287,7 @@ type ListValue struct {
 
 func (x *ListValue) Reset() {
 	*x = ListValue{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[1]
+	mi := &file_api_room_service_room_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -255,7 +299,7 @@ func (x *ListValue) String() string {
 func (*ListValue) ProtoMessage() {}
 
 func (x *ListValue) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[1]
+	mi := &file_api_room_service_room_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -268,7 +312,7 @@ func (x *ListValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListValue.ProtoReflect.Descriptor instead.
 func (*ListValue) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{1}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ListValue) GetValues() []*Value {
@@ -287,7 +331,7 @@ type MapValue struct {
 
 func (x *MapValue) Reset() {
 	*x = MapValue{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[2]
+	mi := &file_api_room_service_room_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -299,7 +343,7 @@ func (x *MapValue) String() string {
 func (*MapValue) ProtoMessage() {}
 
 func (x *MapValue) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[2]
+	mi := &file_api_room_service_room_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -312,7 +356,7 @@ func (x *MapValue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MapValue.ProtoReflect.Descriptor instead.
 func (*MapValue) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{2}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *MapValue) GetValues() map[string]*Value {
@@ -327,14 +371,13 @@ type User struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Metadata      map[string]string      `protobuf:"bytes,3,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // what if client wants to store some data e.g. avatar id
-	JoinedAt      int64                  `protobuf:"varint,4,opt,name=joined_at,json=joinedAt,proto3" json:"joined_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
 	*x = User{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[3]
+	mi := &file_api_room_service_room_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -346,7 +389,7 @@ func (x *User) String() string {
 func (*User) ProtoMessage() {}
 
 func (x *User) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[3]
+	mi := &file_api_room_service_room_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -359,7 +402,7 @@ func (x *User) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use User.ProtoReflect.Descriptor instead.
 func (*User) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{3}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *User) GetId() string {
@@ -383,13 +426,6 @@ func (x *User) GetMetadata() map[string]string {
 	return nil
 }
 
-func (x *User) GetJoinedAt() int64 {
-	if x != nil {
-		return x.JoinedAt
-	}
-	return 0
-}
-
 type RoomData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Values        map[string]*Value      `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // users are displayed as list in snapshot, not a field of RoomData
@@ -399,7 +435,7 @@ type RoomData struct {
 
 func (x *RoomData) Reset() {
 	*x = RoomData{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[4]
+	mi := &file_api_room_service_room_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -411,7 +447,7 @@ func (x *RoomData) String() string {
 func (*RoomData) ProtoMessage() {}
 
 func (x *RoomData) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[4]
+	mi := &file_api_room_service_room_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +460,7 @@ func (x *RoomData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomData.ProtoReflect.Descriptor instead.
 func (*RoomData) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{4}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RoomData) GetValues() map[string]*Value {
@@ -438,7 +474,7 @@ type Command struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	CommandId string                 `protobuf:"bytes,1,opt,name=command_id,json=commandId,proto3" json:"command_id,omitempty"` // no-repeat
 	Timestamp int64                  `protobuf:"varint,2,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	RoomId    string                 `protobuf:"bytes,3,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	RoomId    *string                `protobuf:"bytes,3,opt,name=room_id,json=roomId,proto3,oneof" json:"room_id,omitempty"`
 	UserId    string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	// Types that are valid to be assigned to Payload:
 	//
@@ -455,7 +491,7 @@ type Command struct {
 
 func (x *Command) Reset() {
 	*x = Command{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[5]
+	mi := &file_api_room_service_room_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -467,7 +503,7 @@ func (x *Command) String() string {
 func (*Command) ProtoMessage() {}
 
 func (x *Command) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[5]
+	mi := &file_api_room_service_room_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -480,7 +516,7 @@ func (x *Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Command.ProtoReflect.Descriptor instead.
 func (*Command) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{5}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Command) GetCommandId() string {
@@ -498,8 +534,8 @@ func (x *Command) GetTimestamp() int64 {
 }
 
 func (x *Command) GetRoomId() string {
-	if x != nil {
-		return x.RoomId
+	if x != nil && x.RoomId != nil {
+		return *x.RoomId
 	}
 	return ""
 }
@@ -622,7 +658,7 @@ type CreateRoomCommandBody struct {
 
 func (x *CreateRoomCommandBody) Reset() {
 	*x = CreateRoomCommandBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[6]
+	mi := &file_api_room_service_room_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -634,7 +670,7 @@ func (x *CreateRoomCommandBody) String() string {
 func (*CreateRoomCommandBody) ProtoMessage() {}
 
 func (x *CreateRoomCommandBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[6]
+	mi := &file_api_room_service_room_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,7 +683,7 @@ func (x *CreateRoomCommandBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRoomCommandBody.ProtoReflect.Descriptor instead.
 func (*CreateRoomCommandBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{6}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CreateRoomCommandBody) GetRoomOptions() map[string]string {
@@ -666,7 +702,7 @@ type DeleteRoomCommandBody struct {
 
 func (x *DeleteRoomCommandBody) Reset() {
 	*x = DeleteRoomCommandBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[7]
+	mi := &file_api_room_service_room_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +714,7 @@ func (x *DeleteRoomCommandBody) String() string {
 func (*DeleteRoomCommandBody) ProtoMessage() {}
 
 func (x *DeleteRoomCommandBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[7]
+	mi := &file_api_room_service_room_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +727,7 @@ func (x *DeleteRoomCommandBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRoomCommandBody.ProtoReflect.Descriptor instead.
 func (*DeleteRoomCommandBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{7}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteRoomCommandBody) GetDeleteApprove() bool {
@@ -710,7 +746,7 @@ type JoinRoomCommandBody struct {
 
 func (x *JoinRoomCommandBody) Reset() {
 	*x = JoinRoomCommandBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[8]
+	mi := &file_api_room_service_room_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -722,7 +758,7 @@ func (x *JoinRoomCommandBody) String() string {
 func (*JoinRoomCommandBody) ProtoMessage() {}
 
 func (x *JoinRoomCommandBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[8]
+	mi := &file_api_room_service_room_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -735,7 +771,7 @@ func (x *JoinRoomCommandBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinRoomCommandBody.ProtoReflect.Descriptor instead.
 func (*JoinRoomCommandBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{8}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *JoinRoomCommandBody) GetUserFull() *User {
@@ -754,7 +790,7 @@ type LeaveRoomCommandBody struct {
 
 func (x *LeaveRoomCommandBody) Reset() {
 	*x = LeaveRoomCommandBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[9]
+	mi := &file_api_room_service_room_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -766,7 +802,7 @@ func (x *LeaveRoomCommandBody) String() string {
 func (*LeaveRoomCommandBody) ProtoMessage() {}
 
 func (x *LeaveRoomCommandBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[9]
+	mi := &file_api_room_service_room_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -779,7 +815,7 @@ func (x *LeaveRoomCommandBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeaveRoomCommandBody.ProtoReflect.Descriptor instead.
 func (*LeaveRoomCommandBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{9}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *LeaveRoomCommandBody) GetLeaveApprove() bool {
@@ -800,7 +836,7 @@ type SetAppendDeleteDataCommandBody struct {
 
 func (x *SetAppendDeleteDataCommandBody) Reset() {
 	*x = SetAppendDeleteDataCommandBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[10]
+	mi := &file_api_room_service_room_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -812,7 +848,7 @@ func (x *SetAppendDeleteDataCommandBody) String() string {
 func (*SetAppendDeleteDataCommandBody) ProtoMessage() {}
 
 func (x *SetAppendDeleteDataCommandBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[10]
+	mi := &file_api_room_service_room_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -825,7 +861,7 @@ func (x *SetAppendDeleteDataCommandBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAppendDeleteDataCommandBody.ProtoReflect.Descriptor instead.
 func (*SetAppendDeleteDataCommandBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{10}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SetAppendDeleteDataCommandBody) GetDataId() string {
@@ -858,7 +894,7 @@ type RefreshRoomCommandBody struct {
 
 func (x *RefreshRoomCommandBody) Reset() {
 	*x = RefreshRoomCommandBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[11]
+	mi := &file_api_room_service_room_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -870,7 +906,7 @@ func (x *RefreshRoomCommandBody) String() string {
 func (*RefreshRoomCommandBody) ProtoMessage() {}
 
 func (x *RefreshRoomCommandBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[11]
+	mi := &file_api_room_service_room_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -883,7 +919,7 @@ func (x *RefreshRoomCommandBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RefreshRoomCommandBody.ProtoReflect.Descriptor instead.
 func (*RefreshRoomCommandBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{11}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RefreshRoomCommandBody) GetRefreshRoom() bool {
@@ -907,6 +943,7 @@ type Event struct {
 	//	*Event_LeftRoom
 	//	*Event_DataEdited
 	//	*Event_FullRoom
+	//	*Event_ErrorMessage
 	Payload       isEvent_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -914,7 +951,7 @@ type Event struct {
 
 func (x *Event) Reset() {
 	*x = Event{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[12]
+	mi := &file_api_room_service_room_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -926,7 +963,7 @@ func (x *Event) String() string {
 func (*Event) ProtoMessage() {}
 
 func (x *Event) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[12]
+	mi := &file_api_room_service_room_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -939,7 +976,7 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Event.ProtoReflect.Descriptor instead.
 func (*Event) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{12}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Event) GetTimestamp() int64 {
@@ -1024,6 +1061,15 @@ func (x *Event) GetFullRoom() *FullRoomSnapshotEventBody {
 	return nil
 }
 
+func (x *Event) GetErrorMessage() *ErrorMessage {
+	if x != nil {
+		if x, ok := x.Payload.(*Event_ErrorMessage); ok {
+			return x.ErrorMessage
+		}
+	}
+	return nil
+}
+
 type isEvent_Payload interface {
 	isEvent_Payload()
 }
@@ -1052,6 +1098,10 @@ type Event_FullRoom struct {
 	FullRoom *FullRoomSnapshotEventBody `protobuf:"bytes,40,opt,name=full_room,json=fullRoom,proto3,oneof"`
 }
 
+type Event_ErrorMessage struct {
+	ErrorMessage *ErrorMessage `protobuf:"bytes,50,opt,name=error_message,json=errorMessage,proto3,oneof"`
+}
+
 func (*Event_RoomCreated) isEvent_Payload() {}
 
 func (*Event_RoomDeleted) isEvent_Payload() {}
@@ -1064,6 +1114,8 @@ func (*Event_DataEdited) isEvent_Payload() {}
 
 func (*Event_FullRoom) isEvent_Payload() {}
 
+func (*Event_ErrorMessage) isEvent_Payload() {}
+
 // bodies of event: can't be used on their own
 type RoomCreatedEventBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1074,7 +1126,7 @@ type RoomCreatedEventBody struct {
 
 func (x *RoomCreatedEventBody) Reset() {
 	*x = RoomCreatedEventBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[13]
+	mi := &file_api_room_service_room_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1086,7 +1138,7 @@ func (x *RoomCreatedEventBody) String() string {
 func (*RoomCreatedEventBody) ProtoMessage() {}
 
 func (x *RoomCreatedEventBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[13]
+	mi := &file_api_room_service_room_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1099,7 +1151,7 @@ func (x *RoomCreatedEventBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomCreatedEventBody.ProtoReflect.Descriptor instead.
 func (*RoomCreatedEventBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{13}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RoomCreatedEventBody) GetRoomOptions() map[string]string {
@@ -1118,7 +1170,7 @@ type RoomDeletedEventBody struct {
 
 func (x *RoomDeletedEventBody) Reset() {
 	*x = RoomDeletedEventBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[14]
+	mi := &file_api_room_service_room_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1130,7 +1182,7 @@ func (x *RoomDeletedEventBody) String() string {
 func (*RoomDeletedEventBody) ProtoMessage() {}
 
 func (x *RoomDeletedEventBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[14]
+	mi := &file_api_room_service_room_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1143,7 +1195,7 @@ func (x *RoomDeletedEventBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoomDeletedEventBody.ProtoReflect.Descriptor instead.
 func (*RoomDeletedEventBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{14}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RoomDeletedEventBody) GetRoomDeleted() bool {
@@ -1162,7 +1214,7 @@ type JoinedRoomEventBody struct {
 
 func (x *JoinedRoomEventBody) Reset() {
 	*x = JoinedRoomEventBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[15]
+	mi := &file_api_room_service_room_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1174,7 +1226,7 @@ func (x *JoinedRoomEventBody) String() string {
 func (*JoinedRoomEventBody) ProtoMessage() {}
 
 func (x *JoinedRoomEventBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[15]
+	mi := &file_api_room_service_room_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1187,7 +1239,7 @@ func (x *JoinedRoomEventBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JoinedRoomEventBody.ProtoReflect.Descriptor instead.
 func (*JoinedRoomEventBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{15}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *JoinedRoomEventBody) GetUserFull() *User {
@@ -1206,7 +1258,7 @@ type LeftRoomEventBody struct {
 
 func (x *LeftRoomEventBody) Reset() {
 	*x = LeftRoomEventBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[16]
+	mi := &file_api_room_service_room_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1218,7 +1270,7 @@ func (x *LeftRoomEventBody) String() string {
 func (*LeftRoomEventBody) ProtoMessage() {}
 
 func (x *LeftRoomEventBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[16]
+	mi := &file_api_room_service_room_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1231,7 +1283,7 @@ func (x *LeftRoomEventBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LeftRoomEventBody.ProtoReflect.Descriptor instead.
 func (*LeftRoomEventBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{16}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *LeftRoomEventBody) GetLeftRoom() bool {
@@ -1253,7 +1305,7 @@ type DataEditedEventBody struct {
 
 func (x *DataEditedEventBody) Reset() {
 	*x = DataEditedEventBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[17]
+	mi := &file_api_room_service_room_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1265,7 +1317,7 @@ func (x *DataEditedEventBody) String() string {
 func (*DataEditedEventBody) ProtoMessage() {}
 
 func (x *DataEditedEventBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[17]
+	mi := &file_api_room_service_room_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1278,7 +1330,7 @@ func (x *DataEditedEventBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataEditedEventBody.ProtoReflect.Descriptor instead.
 func (*DataEditedEventBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{17}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DataEditedEventBody) GetDataId() string {
@@ -1312,7 +1364,7 @@ type FullRoomSnapshotEventBody struct {
 
 func (x *FullRoomSnapshotEventBody) Reset() {
 	*x = FullRoomSnapshotEventBody{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[18]
+	mi := &file_api_room_service_room_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1324,7 +1376,7 @@ func (x *FullRoomSnapshotEventBody) String() string {
 func (*FullRoomSnapshotEventBody) ProtoMessage() {}
 
 func (x *FullRoomSnapshotEventBody) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[18]
+	mi := &file_api_room_service_room_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1337,7 +1389,7 @@ func (x *FullRoomSnapshotEventBody) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FullRoomSnapshotEventBody.ProtoReflect.Descriptor instead.
 func (*FullRoomSnapshotEventBody) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{18}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *FullRoomSnapshotEventBody) GetRoom() *RoomData {
@@ -1367,7 +1419,7 @@ type SingleEvent struct {
 
 func (x *SingleEvent) Reset() {
 	*x = SingleEvent{}
-	mi := &file_api_room_service_room_service_proto_msgTypes[19]
+	mi := &file_api_room_service_room_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1379,7 +1431,7 @@ func (x *SingleEvent) String() string {
 func (*SingleEvent) ProtoMessage() {}
 
 func (x *SingleEvent) ProtoReflect() protoreflect.Message {
-	mi := &file_api_room_service_room_service_proto_msgTypes[19]
+	mi := &file_api_room_service_room_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1392,7 +1444,7 @@ func (x *SingleEvent) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SingleEvent.ProtoReflect.Descriptor instead.
 func (*SingleEvent) Descriptor() ([]byte, []int) {
-	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{19}
+	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SingleEvent) GetResult() isSingleEvent_Result {
@@ -1440,7 +1492,9 @@ var File_api_room_service_room_service_proto protoreflect.FileDescriptor
 
 const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\n" +
-	"#api/room_service/room_service.proto\x12\x03api\"\x9c\x02\n" +
+	"#api/room_service/room_service.proto\x12\x03api\"$\n" +
+	"\fErrorMessage\x12\x14\n" +
+	"\x05error\x18\x01 \x01(\tR\x05error\"\x9c\x02\n" +
 	"\x05Value\x12#\n" +
 	"\fstring_value\x18\x01 \x01(\tH\x00R\vstringValue\x12\x1d\n" +
 	"\tint_value\x18\x02 \x01(\x03H\x00R\bintValue\x12!\n" +
@@ -1461,12 +1515,11 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\vValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12 \n" +
 	"\x05value\x18\x02 \x01(\v2\n" +
-	".api.ValueR\x05value:\x028\x01\"\xb9\x01\n" +
+	".api.ValueR\x05value:\x028\x01\"\x9c\x01\n" +
 	"\x04User\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x123\n" +
-	"\bmetadata\x18\x03 \x03(\v2\x17.api.User.MetadataEntryR\bmetadata\x12\x1b\n" +
-	"\tjoined_at\x18\x04 \x01(\x03R\bjoinedAt\x1a;\n" +
+	"\bmetadata\x18\x03 \x03(\v2\x17.api.User.MetadataEntryR\bmetadata\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x84\x01\n" +
@@ -1475,12 +1528,12 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\vValuesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12 \n" +
 	"\x05value\x18\x02 \x01(\v2\n" +
-	".api.ValueR\x05value:\x028\x01\"\x80\x04\n" +
+	".api.ValueR\x05value:\x028\x01\"\x91\x04\n" +
 	"\aCommand\x12\x1d\n" +
 	"\n" +
 	"command_id\x18\x01 \x01(\tR\tcommandId\x12\x1c\n" +
-	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12\x17\n" +
-	"\aroom_id\x18\x03 \x01(\tR\x06roomId\x12\x17\n" +
+	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12\x1c\n" +
+	"\aroom_id\x18\x03 \x01(\tH\x01R\x06roomId\x88\x01\x01\x12\x17\n" +
 	"\auser_id\x18\x04 \x01(\tR\x06userId\x12=\n" +
 	"\vcreate_room\x18\n" +
 	" \x01(\v2\x1a.api.CreateRoomCommandBodyH\x00R\n" +
@@ -1493,7 +1546,9 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\vaffect_data\x18\x1e \x01(\v2#.api.SetAppendDeleteDataCommandBodyH\x00R\n" +
 	"affectData\x12@\n" +
 	"\frefresh_room\x18( \x01(\v2\x1b.api.RefreshRoomCommandBodyH\x00R\vrefreshRoomB\t\n" +
-	"\apayload\"\xa7\x01\n" +
+	"\apayloadB\n" +
+	"\n" +
+	"\b_room_id\"\xa7\x01\n" +
 	"\x15CreateRoomCommandBody\x12N\n" +
 	"\froom_options\x18\x01 \x03(\v2+.api.CreateRoomCommandBody.RoomOptionsEntryR\vroomOptions\x1a>\n" +
 	"\x10RoomOptionsEntry\x12\x10\n" +
@@ -1513,7 +1568,7 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\fcommand_mode\x18\x03 \x01(\x0e2\x11.api.DateEditModeR\vcommandModeB\r\n" +
 	"\v_data_value\";\n" +
 	"\x16RefreshRoomCommandBody\x12!\n" +
-	"\frefresh_room\x18\x01 \x01(\bR\vrefreshRoom\"\xd2\x03\n" +
+	"\frefresh_room\x18\x01 \x01(\bR\vrefreshRoom\"\x8c\x04\n" +
 	"\x05Event\x12\x1c\n" +
 	"\ttimestamp\x18\x02 \x01(\x03R\ttimestamp\x12\x17\n" +
 	"\aroom_id\x18\x03 \x01(\tR\x06roomId\x12\x17\n" +
@@ -1526,7 +1581,8 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\tleft_room\x18\x15 \x01(\v2\x16.api.LeftRoomEventBodyH\x00R\bleftRoom\x12;\n" +
 	"\vdata_edited\x18\x1e \x01(\v2\x18.api.DataEditedEventBodyH\x00R\n" +
 	"dataEdited\x12=\n" +
-	"\tfull_room\x18( \x01(\v2\x1e.api.FullRoomSnapshotEventBodyH\x00R\bfullRoomB\t\n" +
+	"\tfull_room\x18( \x01(\v2\x1e.api.FullRoomSnapshotEventBodyH\x00R\bfullRoom\x128\n" +
+	"\rerror_message\x182 \x01(\v2\x11.api.ErrorMessageH\x00R\ferrorMessageB\t\n" +
 	"\apayload\"\xa5\x01\n" +
 	"\x14RoomCreatedEventBody\x12M\n" +
 	"\froom_options\x18\x01 \x03(\v2*.api.RoomCreatedEventBody.RoomOptionsEntryR\vroomOptions\x1a>\n" +
@@ -1577,77 +1633,79 @@ func file_api_room_service_room_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_room_service_room_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_room_service_room_service_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_api_room_service_room_service_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_api_room_service_room_service_proto_goTypes = []any{
 	(DateEditMode)(0),                      // 0: api.DateEditMode
-	(*Value)(nil),                          // 1: api.Value
-	(*ListValue)(nil),                      // 2: api.ListValue
-	(*MapValue)(nil),                       // 3: api.MapValue
-	(*User)(nil),                           // 4: api.User
-	(*RoomData)(nil),                       // 5: api.RoomData
-	(*Command)(nil),                        // 6: api.Command
-	(*CreateRoomCommandBody)(nil),          // 7: api.CreateRoomCommandBody
-	(*DeleteRoomCommandBody)(nil),          // 8: api.DeleteRoomCommandBody
-	(*JoinRoomCommandBody)(nil),            // 9: api.JoinRoomCommandBody
-	(*LeaveRoomCommandBody)(nil),           // 10: api.LeaveRoomCommandBody
-	(*SetAppendDeleteDataCommandBody)(nil), // 11: api.SetAppendDeleteDataCommandBody
-	(*RefreshRoomCommandBody)(nil),         // 12: api.RefreshRoomCommandBody
-	(*Event)(nil),                          // 13: api.Event
-	(*RoomCreatedEventBody)(nil),           // 14: api.RoomCreatedEventBody
-	(*RoomDeletedEventBody)(nil),           // 15: api.RoomDeletedEventBody
-	(*JoinedRoomEventBody)(nil),            // 16: api.JoinedRoomEventBody
-	(*LeftRoomEventBody)(nil),              // 17: api.LeftRoomEventBody
-	(*DataEditedEventBody)(nil),            // 18: api.DataEditedEventBody
-	(*FullRoomSnapshotEventBody)(nil),      // 19: api.FullRoomSnapshotEventBody
-	(*SingleEvent)(nil),                    // 20: api.SingleEvent
-	nil,                                    // 21: api.MapValue.ValuesEntry
-	nil,                                    // 22: api.User.MetadataEntry
-	nil,                                    // 23: api.RoomData.ValuesEntry
-	nil,                                    // 24: api.CreateRoomCommandBody.RoomOptionsEntry
-	nil,                                    // 25: api.RoomCreatedEventBody.RoomOptionsEntry
+	(*ErrorMessage)(nil),                   // 1: api.ErrorMessage
+	(*Value)(nil),                          // 2: api.Value
+	(*ListValue)(nil),                      // 3: api.ListValue
+	(*MapValue)(nil),                       // 4: api.MapValue
+	(*User)(nil),                           // 5: api.User
+	(*RoomData)(nil),                       // 6: api.RoomData
+	(*Command)(nil),                        // 7: api.Command
+	(*CreateRoomCommandBody)(nil),          // 8: api.CreateRoomCommandBody
+	(*DeleteRoomCommandBody)(nil),          // 9: api.DeleteRoomCommandBody
+	(*JoinRoomCommandBody)(nil),            // 10: api.JoinRoomCommandBody
+	(*LeaveRoomCommandBody)(nil),           // 11: api.LeaveRoomCommandBody
+	(*SetAppendDeleteDataCommandBody)(nil), // 12: api.SetAppendDeleteDataCommandBody
+	(*RefreshRoomCommandBody)(nil),         // 13: api.RefreshRoomCommandBody
+	(*Event)(nil),                          // 14: api.Event
+	(*RoomCreatedEventBody)(nil),           // 15: api.RoomCreatedEventBody
+	(*RoomDeletedEventBody)(nil),           // 16: api.RoomDeletedEventBody
+	(*JoinedRoomEventBody)(nil),            // 17: api.JoinedRoomEventBody
+	(*LeftRoomEventBody)(nil),              // 18: api.LeftRoomEventBody
+	(*DataEditedEventBody)(nil),            // 19: api.DataEditedEventBody
+	(*FullRoomSnapshotEventBody)(nil),      // 20: api.FullRoomSnapshotEventBody
+	(*SingleEvent)(nil),                    // 21: api.SingleEvent
+	nil,                                    // 22: api.MapValue.ValuesEntry
+	nil,                                    // 23: api.User.MetadataEntry
+	nil,                                    // 24: api.RoomData.ValuesEntry
+	nil,                                    // 25: api.CreateRoomCommandBody.RoomOptionsEntry
+	nil,                                    // 26: api.RoomCreatedEventBody.RoomOptionsEntry
 }
 var file_api_room_service_room_service_proto_depIdxs = []int32{
-	2,  // 0: api.Value.list_value:type_name -> api.ListValue
-	3,  // 1: api.Value.map_value:type_name -> api.MapValue
-	1,  // 2: api.ListValue.values:type_name -> api.Value
-	21, // 3: api.MapValue.values:type_name -> api.MapValue.ValuesEntry
-	22, // 4: api.User.metadata:type_name -> api.User.MetadataEntry
-	23, // 5: api.RoomData.values:type_name -> api.RoomData.ValuesEntry
-	7,  // 6: api.Command.create_room:type_name -> api.CreateRoomCommandBody
-	8,  // 7: api.Command.delete_room:type_name -> api.DeleteRoomCommandBody
-	9,  // 8: api.Command.join_room:type_name -> api.JoinRoomCommandBody
-	10, // 9: api.Command.leave_room:type_name -> api.LeaveRoomCommandBody
-	11, // 10: api.Command.affect_data:type_name -> api.SetAppendDeleteDataCommandBody
-	12, // 11: api.Command.refresh_room:type_name -> api.RefreshRoomCommandBody
-	24, // 12: api.CreateRoomCommandBody.room_options:type_name -> api.CreateRoomCommandBody.RoomOptionsEntry
-	4,  // 13: api.JoinRoomCommandBody.user_full:type_name -> api.User
-	1,  // 14: api.SetAppendDeleteDataCommandBody.data_value:type_name -> api.Value
+	3,  // 0: api.Value.list_value:type_name -> api.ListValue
+	4,  // 1: api.Value.map_value:type_name -> api.MapValue
+	2,  // 2: api.ListValue.values:type_name -> api.Value
+	22, // 3: api.MapValue.values:type_name -> api.MapValue.ValuesEntry
+	23, // 4: api.User.metadata:type_name -> api.User.MetadataEntry
+	24, // 5: api.RoomData.values:type_name -> api.RoomData.ValuesEntry
+	8,  // 6: api.Command.create_room:type_name -> api.CreateRoomCommandBody
+	9,  // 7: api.Command.delete_room:type_name -> api.DeleteRoomCommandBody
+	10, // 8: api.Command.join_room:type_name -> api.JoinRoomCommandBody
+	11, // 9: api.Command.leave_room:type_name -> api.LeaveRoomCommandBody
+	12, // 10: api.Command.affect_data:type_name -> api.SetAppendDeleteDataCommandBody
+	13, // 11: api.Command.refresh_room:type_name -> api.RefreshRoomCommandBody
+	25, // 12: api.CreateRoomCommandBody.room_options:type_name -> api.CreateRoomCommandBody.RoomOptionsEntry
+	5,  // 13: api.JoinRoomCommandBody.user_full:type_name -> api.User
+	2,  // 14: api.SetAppendDeleteDataCommandBody.data_value:type_name -> api.Value
 	0,  // 15: api.SetAppendDeleteDataCommandBody.command_mode:type_name -> api.DateEditMode
-	14, // 16: api.Event.room_created:type_name -> api.RoomCreatedEventBody
-	15, // 17: api.Event.room_deleted:type_name -> api.RoomDeletedEventBody
-	16, // 18: api.Event.joined_room:type_name -> api.JoinedRoomEventBody
-	17, // 19: api.Event.left_room:type_name -> api.LeftRoomEventBody
-	18, // 20: api.Event.data_edited:type_name -> api.DataEditedEventBody
-	19, // 21: api.Event.full_room:type_name -> api.FullRoomSnapshotEventBody
-	25, // 22: api.RoomCreatedEventBody.room_options:type_name -> api.RoomCreatedEventBody.RoomOptionsEntry
-	4,  // 23: api.JoinedRoomEventBody.user_full:type_name -> api.User
-	1,  // 24: api.DataEditedEventBody.data_value:type_name -> api.Value
-	0,  // 25: api.DataEditedEventBody.command_mode:type_name -> api.DateEditMode
-	5,  // 26: api.FullRoomSnapshotEventBody.room:type_name -> api.RoomData
-	4,  // 27: api.FullRoomSnapshotEventBody.users:type_name -> api.User
-	19, // 28: api.SingleEvent.full_room:type_name -> api.FullRoomSnapshotEventBody
-	15, // 29: api.SingleEvent.room_deleted:type_name -> api.RoomDeletedEventBody
-	1,  // 30: api.MapValue.ValuesEntry.value:type_name -> api.Value
-	1,  // 31: api.RoomData.ValuesEntry.value:type_name -> api.Value
-	6,  // 32: api.RoomService.Stream:input_type -> api.Command
-	6,  // 33: api.RoomService.SingleCommand:input_type -> api.Command
-	13, // 34: api.RoomService.Stream:output_type -> api.Event
-	20, // 35: api.RoomService.SingleCommand:output_type -> api.SingleEvent
-	34, // [34:36] is the sub-list for method output_type
-	32, // [32:34] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	15, // 16: api.Event.room_created:type_name -> api.RoomCreatedEventBody
+	16, // 17: api.Event.room_deleted:type_name -> api.RoomDeletedEventBody
+	17, // 18: api.Event.joined_room:type_name -> api.JoinedRoomEventBody
+	18, // 19: api.Event.left_room:type_name -> api.LeftRoomEventBody
+	19, // 20: api.Event.data_edited:type_name -> api.DataEditedEventBody
+	20, // 21: api.Event.full_room:type_name -> api.FullRoomSnapshotEventBody
+	1,  // 22: api.Event.error_message:type_name -> api.ErrorMessage
+	26, // 23: api.RoomCreatedEventBody.room_options:type_name -> api.RoomCreatedEventBody.RoomOptionsEntry
+	5,  // 24: api.JoinedRoomEventBody.user_full:type_name -> api.User
+	2,  // 25: api.DataEditedEventBody.data_value:type_name -> api.Value
+	0,  // 26: api.DataEditedEventBody.command_mode:type_name -> api.DateEditMode
+	6,  // 27: api.FullRoomSnapshotEventBody.room:type_name -> api.RoomData
+	5,  // 28: api.FullRoomSnapshotEventBody.users:type_name -> api.User
+	20, // 29: api.SingleEvent.full_room:type_name -> api.FullRoomSnapshotEventBody
+	16, // 30: api.SingleEvent.room_deleted:type_name -> api.RoomDeletedEventBody
+	2,  // 31: api.MapValue.ValuesEntry.value:type_name -> api.Value
+	2,  // 32: api.RoomData.ValuesEntry.value:type_name -> api.Value
+	7,  // 33: api.RoomService.Stream:input_type -> api.Command
+	7,  // 34: api.RoomService.SingleCommand:input_type -> api.Command
+	14, // 35: api.RoomService.Stream:output_type -> api.Event
+	21, // 36: api.RoomService.SingleCommand:output_type -> api.SingleEvent
+	35, // [35:37] is the sub-list for method output_type
+	33, // [33:35] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_api_room_service_room_service_proto_init() }
@@ -1655,7 +1713,7 @@ func file_api_room_service_room_service_proto_init() {
 	if File_api_room_service_room_service_proto != nil {
 		return
 	}
-	file_api_room_service_room_service_proto_msgTypes[0].OneofWrappers = []any{
+	file_api_room_service_room_service_proto_msgTypes[1].OneofWrappers = []any{
 		(*Value_StringValue)(nil),
 		(*Value_IntValue)(nil),
 		(*Value_FloatValue)(nil),
@@ -1664,7 +1722,7 @@ func file_api_room_service_room_service_proto_init() {
 		(*Value_ListValue)(nil),
 		(*Value_MapValue)(nil),
 	}
-	file_api_room_service_room_service_proto_msgTypes[5].OneofWrappers = []any{
+	file_api_room_service_room_service_proto_msgTypes[6].OneofWrappers = []any{
 		(*Command_CreateRoom)(nil),
 		(*Command_DeleteRoom)(nil),
 		(*Command_JoinRoom)(nil),
@@ -1672,17 +1730,18 @@ func file_api_room_service_room_service_proto_init() {
 		(*Command_AffectData)(nil),
 		(*Command_RefreshRoom)(nil),
 	}
-	file_api_room_service_room_service_proto_msgTypes[10].OneofWrappers = []any{}
-	file_api_room_service_room_service_proto_msgTypes[12].OneofWrappers = []any{
+	file_api_room_service_room_service_proto_msgTypes[11].OneofWrappers = []any{}
+	file_api_room_service_room_service_proto_msgTypes[13].OneofWrappers = []any{
 		(*Event_RoomCreated)(nil),
 		(*Event_RoomDeleted)(nil),
 		(*Event_JoinedRoom)(nil),
 		(*Event_LeftRoom)(nil),
 		(*Event_DataEdited)(nil),
 		(*Event_FullRoom)(nil),
+		(*Event_ErrorMessage)(nil),
 	}
-	file_api_room_service_room_service_proto_msgTypes[17].OneofWrappers = []any{}
-	file_api_room_service_room_service_proto_msgTypes[19].OneofWrappers = []any{
+	file_api_room_service_room_service_proto_msgTypes[18].OneofWrappers = []any{}
+	file_api_room_service_room_service_proto_msgTypes[20].OneofWrappers = []any{
 		(*SingleEvent_FullRoom)(nil),
 		(*SingleEvent_RoomDeleted)(nil),
 	}
@@ -1692,7 +1751,7 @@ func file_api_room_service_room_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_room_service_room_service_proto_rawDesc), len(file_api_room_service_room_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   25,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

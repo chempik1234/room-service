@@ -1,4 +1,4 @@
-package utils
+package projectutils
 
 import (
 	"github.com/chempik1234/super-danis-library-golang/pkg/types"

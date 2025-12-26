@@ -13,6 +13,7 @@ enum DateEditMode {
   SET = 0;
   DELETE = 1;
   APPEND = 2;  // for list or map
+  REMOVE = 3;
 }
 
 message Value {
@@ -53,7 +54,7 @@ message RoomData {
 // --------------------- command messages
 
 message Command {
-  string command_id = 1; // no-repeat
+  string command_id = 1; // no-repeat, but if commandID is empty, no checks are applied
   int64 timestamp = 2;
   optional string room_id = 3;
   string user_id = 4;
@@ -85,13 +86,14 @@ message JoinRoomCommandBody {
 }
 
 message LeaveRoomCommandBody {
-  bool leave_approve = 1;  // to differ from DeleteRoomCommandBody as it's empty too
+  string kicked_user_id = 1; // we can kick someone
 }
 
 message SetAppendDeleteDataCommandBody {
   string data_id = 1;
-  optional Value data_value = 2;  // no need for delete
+  optional Value data_value = 2;  // optional because no need for delete
   DateEditMode command_mode = 3;
+  optional string item_index = 4; // map key or list index - if used, SET/REMOVE modes affect only ITEM, not WHOLE VALUE
 }
 
 message RefreshRoomCommandBody {
@@ -124,18 +126,21 @@ message Event {
 // bodies of event: can't be used on their own
 message RoomCreatedEventBody {// for SDK info, user likely won't see this...
   map<string, string> room_options = 1; // max_users for example
+  string room_id = 2;
 }
 
 message RoomDeletedEventBody {
-  bool room_deleted = 1;  // to differ from LeftRoomEventBody as it's empty too
+  string deleted_room_id = 2;
 }
 
 message JoinedRoomEventBody {
   User user_full = 1;
+  string room_id = 2;
 }
 
 message LeftRoomEventBody {
-  bool left_room = 1;  // to differ from RoomDeletedEventBody as it's empty too
+  string room_id = 3;
+  string kicked_user_id = 2;
 }
 
 // data edited can be created, edited & deleted
@@ -143,11 +148,15 @@ message DataEditedEventBody {
   string data_id = 1;
   optional Value data_value = 2;  // no need for delete
   DateEditMode command_mode = 3;
+  string room_id = 4;
 }
 
 message FullRoomSnapshotEventBody {
   RoomData room = 1;
   repeated User users = 2;
+
+  map<string, string> room_options = 3; // max_users for example
+  string room_id = 4;
 }
 
 // --------------------- single command result

@@ -8,3 +8,9 @@ tasks:
         --go-grpc_out=./room_service
         ./api/room_service/room_service.proto
     summary: Generate gRPC code from protofile
+
+  lint:
+    dir: ./room_service
+    cmds:
+      - golangci-lint run ./... --config ../golangci-lint.yml
+    summary: Lint the code with golangci-lint

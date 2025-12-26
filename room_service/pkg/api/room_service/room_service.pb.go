@@ -27,6 +27,7 @@ const (
 	DateEditMode_SET    DateEditMode = 0
 	DateEditMode_DELETE DateEditMode = 1
 	DateEditMode_APPEND DateEditMode = 2 // for list or map
+	DateEditMode_REMOVE DateEditMode = 3
 )
 
 // Enum value maps for DateEditMode.
@@ -35,11 +36,13 @@ var (
 		0: "SET",
 		1: "DELETE",
 		2: "APPEND",
+		3: "REMOVE",
 	}
 	DateEditMode_value = map[string]int32{
 		"SET":    0,
 		"DELETE": 1,
 		"APPEND": 2,
+		"REMOVE": 3,
 	}
 )
 
@@ -783,7 +786,7 @@ func (x *JoinRoomCommandBody) GetUserFull() *User {
 
 type LeaveRoomCommandBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	LeaveApprove  bool                   `protobuf:"varint,1,opt,name=leave_approve,json=leaveApprove,proto3" json:"leave_approve,omitempty"` // to differ from DeleteRoomCommandBody as it's empty too
+	KickedUserId  string                 `protobuf:"bytes,1,opt,name=kicked_user_id,json=kickedUserId,proto3" json:"kicked_user_id,omitempty"` // we can kick someone
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -818,11 +821,11 @@ func (*LeaveRoomCommandBody) Descriptor() ([]byte, []int) {
 	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{10}
 }
 
-func (x *LeaveRoomCommandBody) GetLeaveApprove() bool {
+func (x *LeaveRoomCommandBody) GetKickedUserId() string {
 	if x != nil {
-		return x.LeaveApprove
+		return x.KickedUserId
 	}
-	return false
+	return ""
 }
 
 type SetAppendDeleteDataCommandBody struct {
@@ -830,6 +833,7 @@ type SetAppendDeleteDataCommandBody struct {
 	DataId        string                 `protobuf:"bytes,1,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
 	DataValue     *Value                 `protobuf:"bytes,2,opt,name=data_value,json=dataValue,proto3,oneof" json:"data_value,omitempty"` // no need for delete
 	CommandMode   DateEditMode           `protobuf:"varint,3,opt,name=command_mode,json=commandMode,proto3,enum=api.DateEditMode" json:"command_mode,omitempty"`
+	ItemIndex     *string                `protobuf:"bytes,4,opt,name=item_index,json=itemIndex,proto3,oneof" json:"item_index,omitempty"` // map key or list index
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -883,6 +887,13 @@ func (x *SetAppendDeleteDataCommandBody) GetCommandMode() DateEditMode {
 		return x.CommandMode
 	}
 	return DateEditMode_SET
+}
+
+func (x *SetAppendDeleteDataCommandBody) GetItemIndex() string {
+	if x != nil && x.ItemIndex != nil {
+		return *x.ItemIndex
+	}
+	return ""
 }
 
 type RefreshRoomCommandBody struct {
@@ -1120,6 +1131,7 @@ func (*Event_ErrorMessage) isEvent_Payload() {}
 type RoomCreatedEventBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoomOptions   map[string]string      `protobuf:"bytes,1,rep,name=room_options,json=roomOptions,proto3" json:"room_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // max_users for example
+	RoomId        string                 `protobuf:"bytes,2,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1161,9 +1173,16 @@ func (x *RoomCreatedEventBody) GetRoomOptions() map[string]string {
 	return nil
 }
 
+func (x *RoomCreatedEventBody) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
 type RoomDeletedEventBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	RoomDeleted   bool                   `protobuf:"varint,1,opt,name=room_deleted,json=roomDeleted,proto3" json:"room_deleted,omitempty"` // to differ from LeftRoomEventBody as it's empty too
+	DeletedRoomId string                 `protobuf:"bytes,2,opt,name=deleted_room_id,json=deletedRoomId,proto3" json:"deleted_room_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1198,16 +1217,17 @@ func (*RoomDeletedEventBody) Descriptor() ([]byte, []int) {
 	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *RoomDeletedEventBody) GetRoomDeleted() bool {
+func (x *RoomDeletedEventBody) GetDeletedRoomId() string {
 	if x != nil {
-		return x.RoomDeleted
+		return x.DeletedRoomId
 	}
-	return false
+	return ""
 }
 
 type JoinedRoomEventBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserFull      *User                  `protobuf:"bytes,1,opt,name=user_full,json=userFull,proto3" json:"user_full,omitempty"`
+	RoomId        string                 `protobuf:"bytes,2,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1249,9 +1269,17 @@ func (x *JoinedRoomEventBody) GetUserFull() *User {
 	return nil
 }
 
+func (x *JoinedRoomEventBody) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
 type LeftRoomEventBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	LeftRoom      bool                   `protobuf:"varint,1,opt,name=left_room,json=leftRoom,proto3" json:"left_room,omitempty"` // to differ from RoomDeletedEventBody as it's empty too
+	RoomId        string                 `protobuf:"bytes,3,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	KickedUserId  string                 `protobuf:"bytes,2,opt,name=kicked_user_id,json=kickedUserId,proto3" json:"kicked_user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1286,11 +1314,18 @@ func (*LeftRoomEventBody) Descriptor() ([]byte, []int) {
 	return file_api_room_service_room_service_proto_rawDescGZIP(), []int{17}
 }
 
-func (x *LeftRoomEventBody) GetLeftRoom() bool {
+func (x *LeftRoomEventBody) GetRoomId() string {
 	if x != nil {
-		return x.LeftRoom
+		return x.RoomId
 	}
-	return false
+	return ""
+}
+
+func (x *LeftRoomEventBody) GetKickedUserId() string {
+	if x != nil {
+		return x.KickedUserId
+	}
+	return ""
 }
 
 // data edited can be created, edited & deleted
@@ -1299,6 +1334,7 @@ type DataEditedEventBody struct {
 	DataId        string                 `protobuf:"bytes,1,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
 	DataValue     *Value                 `protobuf:"bytes,2,opt,name=data_value,json=dataValue,proto3,oneof" json:"data_value,omitempty"` // no need for delete
 	CommandMode   DateEditMode           `protobuf:"varint,3,opt,name=command_mode,json=commandMode,proto3,enum=api.DateEditMode" json:"command_mode,omitempty"`
+	RoomId        string                 `protobuf:"bytes,4,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1354,10 +1390,19 @@ func (x *DataEditedEventBody) GetCommandMode() DateEditMode {
 	return DateEditMode_SET
 }
 
+func (x *DataEditedEventBody) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
+}
+
 type FullRoomSnapshotEventBody struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Room          *RoomData              `protobuf:"bytes,1,opt,name=room,proto3" json:"room,omitempty"`
 	Users         []*User                `protobuf:"bytes,2,rep,name=users,proto3" json:"users,omitempty"`
+	RoomOptions   map[string]string      `protobuf:"bytes,3,rep,name=room_options,json=roomOptions,proto3" json:"room_options,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // max_users for example
+	RoomId        string                 `protobuf:"bytes,4,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1404,6 +1449,20 @@ func (x *FullRoomSnapshotEventBody) GetUsers() []*User {
 		return x.Users
 	}
 	return nil
+}
+
+func (x *FullRoomSnapshotEventBody) GetRoomOptions() map[string]string {
+	if x != nil {
+		return x.RoomOptions
+	}
+	return nil
+}
+
+func (x *FullRoomSnapshotEventBody) GetRoomId() string {
+	if x != nil {
+		return x.RoomId
+	}
+	return ""
 }
 
 type SingleEvent struct {
@@ -1557,16 +1616,19 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"\x15DeleteRoomCommandBody\x12%\n" +
 	"\x0edelete_approve\x18\x01 \x01(\bR\rdeleteApprove\"=\n" +
 	"\x13JoinRoomCommandBody\x12&\n" +
-	"\tuser_full\x18\x01 \x01(\v2\t.api.UserR\buserFull\";\n" +
-	"\x14LeaveRoomCommandBody\x12#\n" +
-	"\rleave_approve\x18\x01 \x01(\bR\fleaveApprove\"\xae\x01\n" +
+	"\tuser_full\x18\x01 \x01(\v2\t.api.UserR\buserFull\"<\n" +
+	"\x14LeaveRoomCommandBody\x12$\n" +
+	"\x0ekicked_user_id\x18\x01 \x01(\tR\fkickedUserId\"\xe1\x01\n" +
 	"\x1eSetAppendDeleteDataCommandBody\x12\x17\n" +
 	"\adata_id\x18\x01 \x01(\tR\x06dataId\x12.\n" +
 	"\n" +
 	"data_value\x18\x02 \x01(\v2\n" +
 	".api.ValueH\x00R\tdataValue\x88\x01\x01\x124\n" +
-	"\fcommand_mode\x18\x03 \x01(\x0e2\x11.api.DateEditModeR\vcommandModeB\r\n" +
-	"\v_data_value\";\n" +
+	"\fcommand_mode\x18\x03 \x01(\x0e2\x11.api.DateEditModeR\vcommandMode\x12\"\n" +
+	"\n" +
+	"item_index\x18\x04 \x01(\tH\x01R\titemIndex\x88\x01\x01B\r\n" +
+	"\v_data_valueB\r\n" +
+	"\v_item_index\";\n" +
 	"\x16RefreshRoomCommandBody\x12!\n" +
 	"\frefresh_room\x18\x01 \x01(\bR\vrefreshRoom\"\x8c\x04\n" +
 	"\x05Event\x12\x1c\n" +
@@ -1583,38 +1645,49 @@ const file_api_room_service_room_service_proto_rawDesc = "" +
 	"dataEdited\x12=\n" +
 	"\tfull_room\x18( \x01(\v2\x1e.api.FullRoomSnapshotEventBodyH\x00R\bfullRoom\x128\n" +
 	"\rerror_message\x182 \x01(\v2\x11.api.ErrorMessageH\x00R\ferrorMessageB\t\n" +
-	"\apayload\"\xa5\x01\n" +
+	"\apayload\"\xbe\x01\n" +
 	"\x14RoomCreatedEventBody\x12M\n" +
-	"\froom_options\x18\x01 \x03(\v2*.api.RoomCreatedEventBody.RoomOptionsEntryR\vroomOptions\x1a>\n" +
+	"\froom_options\x18\x01 \x03(\v2*.api.RoomCreatedEventBody.RoomOptionsEntryR\vroomOptions\x12\x17\n" +
+	"\aroom_id\x18\x02 \x01(\tR\x06roomId\x1a>\n" +
 	"\x10RoomOptionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"9\n" +
-	"\x14RoomDeletedEventBody\x12!\n" +
-	"\froom_deleted\x18\x01 \x01(\bR\vroomDeleted\"=\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\">\n" +
+	"\x14RoomDeletedEventBody\x12&\n" +
+	"\x0fdeleted_room_id\x18\x02 \x01(\tR\rdeletedRoomId\"V\n" +
 	"\x13JoinedRoomEventBody\x12&\n" +
-	"\tuser_full\x18\x01 \x01(\v2\t.api.UserR\buserFull\"0\n" +
-	"\x11LeftRoomEventBody\x12\x1b\n" +
-	"\tleft_room\x18\x01 \x01(\bR\bleftRoom\"\xa3\x01\n" +
+	"\tuser_full\x18\x01 \x01(\v2\t.api.UserR\buserFull\x12\x17\n" +
+	"\aroom_id\x18\x02 \x01(\tR\x06roomId\"R\n" +
+	"\x11LeftRoomEventBody\x12\x17\n" +
+	"\aroom_id\x18\x03 \x01(\tR\x06roomId\x12$\n" +
+	"\x0ekicked_user_id\x18\x02 \x01(\tR\fkickedUserId\"\xbc\x01\n" +
 	"\x13DataEditedEventBody\x12\x17\n" +
 	"\adata_id\x18\x01 \x01(\tR\x06dataId\x12.\n" +
 	"\n" +
 	"data_value\x18\x02 \x01(\v2\n" +
 	".api.ValueH\x00R\tdataValue\x88\x01\x01\x124\n" +
-	"\fcommand_mode\x18\x03 \x01(\x0e2\x11.api.DateEditModeR\vcommandModeB\r\n" +
-	"\v_data_value\"_\n" +
+	"\fcommand_mode\x18\x03 \x01(\x0e2\x11.api.DateEditModeR\vcommandMode\x12\x17\n" +
+	"\aroom_id\x18\x04 \x01(\tR\x06roomIdB\r\n" +
+	"\v_data_value\"\x8c\x02\n" +
 	"\x19FullRoomSnapshotEventBody\x12!\n" +
 	"\x04room\x18\x01 \x01(\v2\r.api.RoomDataR\x04room\x12\x1f\n" +
-	"\x05users\x18\x02 \x03(\v2\t.api.UserR\x05users\"\x96\x01\n" +
+	"\x05users\x18\x02 \x03(\v2\t.api.UserR\x05users\x12R\n" +
+	"\froom_options\x18\x03 \x03(\v2/.api.FullRoomSnapshotEventBody.RoomOptionsEntryR\vroomOptions\x12\x17\n" +
+	"\aroom_id\x18\x04 \x01(\tR\x06roomId\x1a>\n" +
+	"\x10RoomOptionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x96\x01\n" +
 	"\vSingleEvent\x12=\n" +
 	"\tfull_room\x18\x01 \x01(\v2\x1e.api.FullRoomSnapshotEventBodyH\x00R\bfullRoom\x12>\n" +
 	"\froom_deleted\x18\x02 \x01(\v2\x19.api.RoomDeletedEventBodyH\x00R\vroomDeletedB\b\n" +
-	"\x06result*/\n" +
+	"\x06result*;\n" +
 	"\fDateEditMode\x12\a\n" +
 	"\x03SET\x10\x00\x12\n" +
 	"\n" +
 	"\x06DELETE\x10\x01\x12\n" +
 	"\n" +
-	"\x06APPEND\x10\x022f\n" +
+	"\x06APPEND\x10\x02\x12\n" +
+	"\n" +
+	"\x06REMOVE\x10\x032f\n" +
 	"\vRoomService\x12&\n" +
 	"\x06Stream\x12\f.api.Command\x1a\n" +
 	".api.Event(\x010\x01\x12/\n" +
@@ -1633,7 +1706,7 @@ func file_api_room_service_room_service_proto_rawDescGZIP() []byte {
 }
 
 var file_api_room_service_room_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_room_service_room_service_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_api_room_service_room_service_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_api_room_service_room_service_proto_goTypes = []any{
 	(DateEditMode)(0),                      // 0: api.DateEditMode
 	(*ErrorMessage)(nil),                   // 1: api.ErrorMessage
@@ -1662,6 +1735,7 @@ var file_api_room_service_room_service_proto_goTypes = []any{
 	nil,                                    // 24: api.RoomData.ValuesEntry
 	nil,                                    // 25: api.CreateRoomCommandBody.RoomOptionsEntry
 	nil,                                    // 26: api.RoomCreatedEventBody.RoomOptionsEntry
+	nil,                                    // 27: api.FullRoomSnapshotEventBody.RoomOptionsEntry
 }
 var file_api_room_service_room_service_proto_depIdxs = []int32{
 	3,  // 0: api.Value.list_value:type_name -> api.ListValue
@@ -1693,19 +1767,20 @@ var file_api_room_service_room_service_proto_depIdxs = []int32{
 	0,  // 26: api.DataEditedEventBody.command_mode:type_name -> api.DateEditMode
 	6,  // 27: api.FullRoomSnapshotEventBody.room:type_name -> api.RoomData
 	5,  // 28: api.FullRoomSnapshotEventBody.users:type_name -> api.User
-	20, // 29: api.SingleEvent.full_room:type_name -> api.FullRoomSnapshotEventBody
-	16, // 30: api.SingleEvent.room_deleted:type_name -> api.RoomDeletedEventBody
-	2,  // 31: api.MapValue.ValuesEntry.value:type_name -> api.Value
-	2,  // 32: api.RoomData.ValuesEntry.value:type_name -> api.Value
-	7,  // 33: api.RoomService.Stream:input_type -> api.Command
-	7,  // 34: api.RoomService.SingleCommand:input_type -> api.Command
-	14, // 35: api.RoomService.Stream:output_type -> api.Event
-	21, // 36: api.RoomService.SingleCommand:output_type -> api.SingleEvent
-	35, // [35:37] is the sub-list for method output_type
-	33, // [33:35] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	27, // 29: api.FullRoomSnapshotEventBody.room_options:type_name -> api.FullRoomSnapshotEventBody.RoomOptionsEntry
+	20, // 30: api.SingleEvent.full_room:type_name -> api.FullRoomSnapshotEventBody
+	16, // 31: api.SingleEvent.room_deleted:type_name -> api.RoomDeletedEventBody
+	2,  // 32: api.MapValue.ValuesEntry.value:type_name -> api.Value
+	2,  // 33: api.RoomData.ValuesEntry.value:type_name -> api.Value
+	7,  // 34: api.RoomService.Stream:input_type -> api.Command
+	7,  // 35: api.RoomService.SingleCommand:input_type -> api.Command
+	14, // 36: api.RoomService.Stream:output_type -> api.Event
+	21, // 37: api.RoomService.SingleCommand:output_type -> api.SingleEvent
+	36, // [36:38] is the sub-list for method output_type
+	34, // [34:36] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_api_room_service_room_service_proto_init() }
@@ -1751,7 +1826,7 @@ func file_api_room_service_room_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_room_service_room_service_proto_rawDesc), len(file_api_room_service_room_service_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   26,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

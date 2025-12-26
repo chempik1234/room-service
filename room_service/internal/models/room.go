@@ -6,22 +6,34 @@ import (
 
 // Room - main model, stores users and their data
 type Room struct {
-	ID          types.UUID
-	OwnerUserId types.NotEmptyText
+	ID          RoomID
+	OwnerUserID types.NotEmptyText
 	Options     map[string]string
 }
 
 // NewRoom creates a new Room with given options
 func NewRoom(ownerUserID types.NotEmptyText, options map[string]string) *Room {
 	return &Room{
-		ID:          types.GenerateUUID(),
-		OwnerUserId: ownerUserID,
+		ID:          RoomID(types.GenerateUUID()),
+		OwnerUserID: ownerUserID,
 		Options:     options,
 	}
 }
 
 // RoomSnapshot - model of full room data, including User list, data & Room itself
 type RoomSnapshot struct {
-	Room *Room
+	Users  []*User
+	Room   *Room
+	Values map[string]Value
 	// TODO: rest fields
+}
+
+// RoomID - type used for Room.ID
+//
+// rely on it when making params with it
+type RoomID types.UUID
+
+// String - convert RoomID into string
+func (id *RoomID) String() string {
+	return types.UUID(*id).String()
 }

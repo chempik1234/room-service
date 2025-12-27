@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/chempik1234/super-danis-library-golang/pkg/pkgports"
+import "context"
 
 // CommandIDShortCache - is the LRU cache for last commands (no-repeat ID)
 //
@@ -8,4 +8,10 @@ import "github.com/chempik1234/super-danis-library-golang/pkg/pkgports"
 // and mechanisms (e.g. N last saved)
 //
 // just storing that commandID exists
-type CommandIDShortCache pkgports.Cache[string, struct{}]
+type CommandIDShortCache interface {
+	// Exists - check if commandID exists in DB (if it does, then skip command)
+	Exists(ctx context.Context, commandID string) (bool, error)
+
+	// Save - saves commandID, so CommandIDShortCache.Exists returns true
+	Save(ctx context.Context, commandID string) error
+}

@@ -1,32 +1,60 @@
 package commandcache
 
-import "context"
+import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/go-redis/redis/v8"
+	"time"
+)
 
 // RedisCommandCache - impl of ports.CommandIdShortCache with Redis
+//
+// Before executing command, check id with Exists - if it's stored, skip the command -
+// it's already in execution (or finished)
 type RedisCommandCache struct {
+	client *redis.Client
+	ttl    time.Duration
 }
 
 // NewRedisCommandCache - create new RedisCommandCache
-func NewRedisCommandCache() *RedisCommandCache {
-	return &RedisCommandCache{}
+func NewRedisCommandCache(addr string, password string, db int, ttlMs int) *RedisCommandCache {
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+	return &RedisCommandCache{
+		client: client,
+		ttl:    time.Duration(ttlMs) * time.Millisecond,
+	}
 }
 
-func (r RedisCommandCache) Set(ctx context.Context, key string, value struct{}) error {
-	//TODO implement me
-	panic("implement me")
+// Exists - check if commandID is already saved in Redis
+//
+// if it is, skip the command - it's already in execution (or finished)
+func (s *RedisCommandCache) Exists(ctx context.Context, commandID string) (bool, error) {
+	key := s.generateKey(commandID)
+	_, err := s.client.Get(ctx, key).Result()
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return false, nil // Not found
+		}
+		return false, fmt.Errorf("error querying redis: %w", err) // Other errors
+	}
+
+	return true, nil
 }
 
-func (r RedisCommandCache) Get(ctx context.Context, key string) (struct{}, bool, error) {
-	//TODO implement me
-	panic("implement me")
+// Save - store commandID in Redis
+func (s *RedisCommandCache) Save(ctx context.Context, commandID string) error {
+	_, err := s.client.Set(ctx, s.generateKey(commandID), "", s.ttl).Result()
+	if err != nil {
+		return fmt.Errorf("error saving command in redis: %w", err)
+	}
+	return nil
 }
 
-func (r RedisCommandCache) GetKeys() []string {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (r RedisCommandCache) GetKeysAmount() int {
-	//TODO implement me
-	panic("implement me")
+func (s *RedisCommandCache) generateKey(id string) string {
+	return fmt.Sprintf("command_%s", id)
 }

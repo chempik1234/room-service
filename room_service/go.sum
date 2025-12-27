@@ -1,7 +1,7 @@
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
-github.com/chempik1234/super-danis-library-golang v1.0.1 h1:XB4AbBSw1LQrXb0SQAm6l7BOWH9wLH57V2OJBJjqEjM=
-github.com/chempik1234/super-danis-library-golang v1.0.1/go.mod h1:e5BAcmeg8lxOZh5ykmkmq4WfCITS70dMtap+PqkgeIQ=
+github.com/chempik1234/super-danis-library-golang v1.2.4 h1:X+lNhm3SiF6Be/TnHkT66qv5IRG5yx+bXjcfFoeabmw=
+github.com/chempik1234/super-danis-library-golang v1.2.4/go.mod h1:vXR/7owI4qRYHEEXNLVhu5DeUSdirpwRqST0HGjAxAQ=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=

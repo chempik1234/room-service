@@ -80,7 +80,7 @@ func (s *RoomService) getKickedUserID(leaveRoom *r.LeaveRoomCommandBody) (kicked
 func (s *RoomService) noRepeatCommandID(ctx context.Context, in *r.Command) (string, error) {
 	commandID := in.GetCommandId()
 	if len(commandID) > 0 {
-		_, commandIDExists, err := s.commandIdShortCache.Get(ctx, commandID)
+		commandIDExists, err := s.commandIdShortCache.Exists(ctx, commandID)
 		if err != nil {
 			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get command_id from short cache", zap.String(commandIDZapKey, commandID), zap.Error(err))
 			return "", fmt.Errorf("failed to get command_id from short cache: %w", err)
@@ -89,7 +89,7 @@ func (s *RoomService) noRepeatCommandID(ctx context.Context, in *r.Command) (str
 			logger.GetLoggerFromCtx(ctx).Info(ctx, "command_id exists in short cache, SKIPPED", zap.String(commandIDZapKey, commandID))
 			return "", fmt.Errorf("command_id '%s' exists in short cache, SKIPPED", commandID)
 		}
-		if s.commandIdShortCache.Set(ctx, in.CommandId, struct{}{}) != nil {
+		if s.commandIdShortCache.Save(ctx, in.CommandId) != nil {
 			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to set command_id into short cache", zap.String(commandIDZapKey, commandID), zap.Error(err))
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
+	"github.com/chempik1234/room-service/internal/projectutils"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
 	"github.com/chempik1234/super-danis-library-golang/pkg/types"
@@ -20,7 +21,7 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 	logger.GetLoggerFromCtx(ctx).Info(ctx, "command received, processing", zap.String(commandIDZapKey, commandID))
 
 	returnEvent := &r.Event{
-		Timestamp: utils.NowTimestamp(),
+		Timestamp: projectutils.NowTimestamp(),
 		RoomId:    in.GetRoomId(),
 		UserId:    in.GetUserId(),
 		Payload:   nil,

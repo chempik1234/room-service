@@ -3,7 +3,7 @@ module github.com/chempik1234/room-service
 go 1.25.1
 
 require (
-	github.com/chempik1234/super-danis-library-golang v1.0.1
+	github.com/chempik1234/super-danis-library-golang v1.2.4
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/wb-go/wbf v0.0.11

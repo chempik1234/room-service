@@ -5,22 +5,46 @@ import (
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 )
 
 // MongoDBRepository - ports.RoomsPort impl with MongoDB
 type MongoDBRepository struct {
-	db *mongo.Client
+	client          *mongo.Client
+	db              *mongo.Database
+	roomsCollection *mongo.Collection
+}
+
+// MongoRepoParams - params for initializing MongoDBRepository
+type MongoRepoParams struct {
+	Database       string
+	RoomCollection string
+	WriteConcern   *writeconcern.WriteConcern
+	ReadConcern    *readconcern.ReadConcern
 }
 
 // NewMongoDBRepository - return new MongoDBRepository
-func NewMongoDBRepository(client *mongo.Client) *MongoDBRepository {
-	return &MongoDBRepository{db: client}
+//
+// roomCollectionName default = "rooms"
+func NewMongoDBRepository(client *mongo.Client, params MongoRepoParams) *MongoDBRepository {
+	s := &MongoDBRepository{client: client}
+	s.db = client.Database(
+		params.Database,
+		options.Database().SetReadConcern(params.ReadConcern),
+		options.Database().SetWriteConcern(params.WriteConcern))
+	if len(params.RoomCollection) == 0 {
+		params.RoomCollection = "rooms"
+	}
+	s.roomsCollection = s.db.Collection(params.RoomCollection)
+	return s
 }
 
 // CreateRoom - create room in MongoDB
 //
 // Create ID yourself
-func (m MongoDBRepository) CreateRoom(ctx context.Context, params *models.Room) (room *models.Room, err error) {
+func (s *MongoDBRepository) CreateRoom(ctx context.Context, params *models.Room) (room *models.Room, err error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -28,7 +52,7 @@ func (m MongoDBRepository) CreateRoom(ctx context.Context, params *models.Room) 
 // DeleteRoom - delete room from MongoDB with all data inside
 //
 // Not found -> errors.ErrRoomDoesntExist
-func (m MongoDBRepository) DeleteRoom(ctx context.Context, params ports.DeleteRoomParams) (err error) {
+func (s *MongoDBRepository) DeleteRoom(ctx context.Context, params ports.DeleteRoomParams) (err error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -36,7 +60,7 @@ func (m MongoDBRepository) DeleteRoom(ctx context.Context, params ports.DeleteRo
 // JoinRoom - add user to room in MongoDB
 //
 // Not found -> errors.ErrRoomDoesntExist
-func (m MongoDBRepository) JoinRoom(ctx context.Context, params ports.JoinRoomParams) (err error) {
+func (s *MongoDBRepository) JoinRoom(ctx context.Context, params ports.JoinRoomParams) (err error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -44,7 +68,7 @@ func (m MongoDBRepository) JoinRoom(ctx context.Context, params ports.JoinRoomPa
 // IsRoomOwner - check if room's owner is given user (MongoDB)
 //
 // Not found -> errors.ErrRoomDoesntExist
-func (m MongoDBRepository) IsRoomOwner(ctx context.Context, params ports.IsRoomOwnerParams) (bool, error) {
+func (s *MongoDBRepository) IsRoomOwner(ctx context.Context, params ports.IsRoomOwnerParams) (bool, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -53,7 +77,7 @@ func (m MongoDBRepository) IsRoomOwner(ctx context.Context, params ports.IsRoomO
 //
 // Room not found -> errors.ErrRoomDoesntExist
 // User not found -> errors.ErrUserNotInRoom
-func (m MongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoomParams) error {
+func (s *MongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoomParams) error {
 	//TODO implement me
 	panic("implement me")
 }
@@ -61,7 +85,7 @@ func (m MongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoomP
 // RoomSnapshot - return a whole sight on room - ownerID, room data KV, roomID... (MongoDB)
 //
 // Room not found -> errors.ErrRoomDoesntExist
-func (m MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomSnapshotParams) (*models.RoomSnapshot, error) {
+func (s *MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomSnapshotParams) (*models.RoomSnapshot, error) {
 	//TODO implement me
 	panic("implement me")
 }
@@ -72,7 +96,7 @@ func (m MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomSn
 //
 // Room not found -> errors.ErrRoomDoesntExist
 // Data not found -> errors.ErrDataPieceDoesntExist
-func (m MongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) error {
+func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) error {
 	//TODO implement me
 	panic("implement me")
 }

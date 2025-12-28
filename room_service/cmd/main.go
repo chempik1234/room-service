@@ -14,6 +14,8 @@ import (
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/redis"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/server"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/server/grpcserver"
+	"go.mongodb.org/mongo-driver/v2/mongo/readconcern"
+	"go.mongodb.org/mongo-driver/v2/mongo/writeconcern"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"log"
@@ -56,12 +58,33 @@ func main() {
 
 	gRPCRetryStrategy := cfg.Service.RetryStrategy.ToStrategy()
 
-	// TODO: roomRepo := commandIDCacheRepo := roomRetryStrategy :=
+	//region service
+	var readConcern *readconcern.ReadConcern
+	switch cfg.MongoDBRoomsRepo.ReadConcern {
+	case "available":
+		readConcern = readconcern.Available()
+	case "local":
+		readConcern = readconcern.Local()
+	case "majority":
+		readConcern = readconcern.Majority()
+	case "linearizable":
+		readConcern = readconcern.Linearizable()
+	case "snapshot":
+		readConcern = readconcern.Snapshot()
+	default:
+		panic(fmt.Errorf("unknown read concern: '%s' (Use one of these: 'available', 'local', 'majority', 'linearizable', 'snapshot')", cfg.MongoDBRoomsRepo.ReadConcern))
+	}
 	roomServiceServer := roomservice.NewRoomService(
-		room.NewMongoDBRepository(mongoClient),
+		room.NewMongoDBRepository(mongoClient, room.MongoRepoParams{
+			Database:       cfg.MongoDBRoomsRepo.Database,
+			RoomCollection: cfg.MongoDBRoomsRepo.RoomsCollection,
+			WriteConcern:   writeconcern.Custom(cfg.MongoDBRoomsRepo.WriteConcern),
+			ReadConcern:    readConcern,
+		}),
 		commandcache.NewRedisCommandCache(redisClient, cfg.Redis.TTLSeconds*1000),
 		gRPCRetryStrategy,
 	)
+	//endregion
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.AddLogMiddleware))
 	room_service.RegisterRoomServiceServer(grpcServer, roomServiceServer)

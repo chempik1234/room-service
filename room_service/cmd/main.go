@@ -9,9 +9,11 @@ import (
 	"github.com/chempik1234/room-service/internal/service/roomservice"
 	"github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/room-service/pkg/transport/grpc/interceptors"
-	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
-	"github.com/chempik1234/super-danis-library-golang/pkg/server"
-	"github.com/chempik1234/super-danis-library-golang/pkg/server/grpcserver"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/mongodb"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/redis"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/server"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/server/grpcserver"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"log"
@@ -33,10 +35,33 @@ func main() {
 	logger.GetLoggerFromCtx(ctx).Info(ctx, "logger init")
 	//endregion
 
-	serviceRetryStrategy := cfg.RetryStrategy.ToStrategy()
+	//region mongodb
+	mongoClient, err := mongodb.New(ctx, cfg.MongoDB)
+	if err != nil {
+		logger.GetLoggerFromCtx(ctx).Error(ctx, "error creating mongodb client", zap.Error(err))
+		return
+	}
+	defer mongodb.DeferDisconnect(ctx, mongoClient)
+	logger.GetLoggerFromCtx(ctx).Info(ctx, "mongodb client created")
+	//endregion
+
+	//region redis
+	redisClient, err := redis.New(ctx, cfg.Redis)
+	if err != nil {
+		logger.GetLoggerFromCtx(ctx).Error(ctx, "error creating redis client", zap.Error(err))
+		return
+	}
+	logger.GetLoggerFromCtx(ctx).Info(ctx, "redis client created")
+	//endregion
+
+	gRPCRetryStrategy := cfg.Service.RetryStrategy.ToStrategy()
 
 	// TODO: roomRepo := commandIDCacheRepo := roomRetryStrategy :=
-	roomServiceServer := roomservice.NewRoomService(room.NewMongoDBRepository(), commandcache.NewRedisCommandCache(), serviceRetryStrategy)
+	roomServiceServer := roomservice.NewRoomService(
+		room.NewMongoDBRepository(mongoClient),
+		commandcache.NewRedisCommandCache(redisClient, cfg.Redis.TTLSeconds*1000),
+		gRPCRetryStrategy,
+	)
 
 	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.AddLogMiddleware))
 	room_service.RegisterRoomServiceServer(grpcServer, roomServiceServer)

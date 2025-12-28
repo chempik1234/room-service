@@ -4,15 +4,17 @@ import (
 	"context"
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 // MongoDBRepository - ports.RoomsPort impl with MongoDB
 type MongoDBRepository struct {
+	db *mongo.Client
 }
 
 // NewMongoDBRepository - return new MongoDBRepository
-func NewMongoDBRepository() *MongoDBRepository {
-	return &MongoDBRepository{}
+func NewMongoDBRepository(client *mongo.Client) *MongoDBRepository {
+	return &MongoDBRepository{db: client}
 }
 
 // CreateRoom - create room in MongoDB

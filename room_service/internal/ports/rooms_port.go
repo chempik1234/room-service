@@ -3,7 +3,7 @@ package ports
 import (
 	"context"
 	"github.com/chempik1234/room-service/internal/models"
-	"github.com/chempik1234/super-danis-library-golang/pkg/types"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 )
 
 // RoomsPort - - port for "Room" and everything in it (userID, users' data managing)

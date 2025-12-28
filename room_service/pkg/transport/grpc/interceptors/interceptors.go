@@ -2,7 +2,7 @@ package interceptors
 
 import (
 	"context"
-	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"

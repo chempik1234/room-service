@@ -18,12 +18,7 @@ type RedisCommandCache struct {
 }
 
 // NewRedisCommandCache - create new RedisCommandCache
-func NewRedisCommandCache(addr string, password string, db int, ttlMs int) *RedisCommandCache {
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
-	})
+func NewRedisCommandCache(client *redis.Client, ttlMs int) *RedisCommandCache {
 	return &RedisCommandCache{
 		client: client,
 		ttl:    time.Duration(ttlMs) * time.Millisecond,

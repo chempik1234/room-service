@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/chempik1234/room-service/internal/models"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
-	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
-	"github.com/chempik1234/super-danis-library-golang/pkg/types"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )

@@ -6,7 +6,7 @@ import (
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
-	"github.com/chempik1234/super-danis-library-golang/pkg/logger"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/wb-go/wbf/retry"
 	"go.uber.org/zap"
 )

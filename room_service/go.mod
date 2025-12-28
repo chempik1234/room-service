@@ -3,7 +3,8 @@ module github.com/chempik1234/room-service
 go 1.25.1
 
 require (
-	github.com/chempik1234/super-danis-library-golang v1.2.4
+	github.com/chempik1234/super-danis-library-golang/v2 v2.2.2
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/wb-go/wbf v0.0.11
@@ -14,6 +15,8 @@ require (
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/net v0.47.0 // indirect

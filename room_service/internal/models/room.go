@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/chempik1234/super-danis-library-golang/pkg/types"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 )
 
 // Room - main model, stores users and their data

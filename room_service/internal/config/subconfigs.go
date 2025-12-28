@@ -1,10 +1,13 @@
 package config
 
+import "github.com/chempik1234/room-service/pkg/config"
+
 // RoomServiceConfig is the config for microservice itself
 type RoomServiceConfig struct {
 	// GRPCPort is the port that Client gateways should connect to (requests and room streaming)
 	GRPCPort int `yaml:"grpc_port" env:"GRPC_PORT"`
-	// TODO: retries
+	// RetryStrategy - retries for gRPC operations
+	RetryStrategy config.RetryStrategyConfig `yaml:"retry" env-prefix:"RETRY_"`
 }
 
 // LogConfig is the config struct for logging

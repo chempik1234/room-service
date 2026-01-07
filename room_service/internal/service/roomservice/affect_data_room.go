@@ -11,9 +11,10 @@ import (
 )
 
 type affectDataParams struct {
-	RoomID *models.RoomID
-	DataID types.AnyText
-	Action ports.Action
+	RoomID    *models.RoomID
+	DataID    types.AnyText
+	ItemIndex types.AnyText // optional
+	Action    ports.Action
 }
 
 func (s *RoomService) affectDataInRoom(ctx context.Context, value *r.Value, dataEditMode r.DateEditMode, params *affectDataParams) (payload *r.Event_DataEdited, err error) {

@@ -1,6 +1,9 @@
 package errors
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // ErrRoomDoesntExist - when no room found with given filter
 var ErrRoomDoesntExist = errors.New("room does not exist")
@@ -13,3 +16,10 @@ var ErrUserNotInRoom = errors.New("user not in room")
 
 // ErrDataPieceDoesntExist - when data item by key you're trying to read/update/delete doesn't exist
 var ErrDataPieceDoesntExist = errors.New("data piece does not exist")
+
+// ErrQuick - create quick error description:
+//
+//	err := errors2.ErrQuick(errors2.ErrRoomIDAlreadyExists, room.ID.String())
+func ErrQuick(err error, quickArg any) error {
+	return fmt.Errorf("%w: %v", err, quickArg)
+}

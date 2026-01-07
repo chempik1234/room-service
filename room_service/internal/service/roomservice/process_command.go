@@ -95,13 +95,19 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 		}
 		break
 	case *r.Command_AffectData:
+		itemIndex := ""
+		if payload.AffectData.ItemIndex != nil {
+			itemIndex = *payload.AffectData.ItemIndex
+		}
+
 		returnEvent.Payload, err = s.affectDataInRoom(ctx,
 			payload.AffectData.DataValue,
 			payload.AffectData.CommandMode,
 			&affectDataParams{
-				RoomID: roomIDValidated,
-				DataID: types.NewAnyText(payload.AffectData.DataId),
-				Action: ports.Action(payload.AffectData.CommandMode),
+				RoomID:    roomIDValidated,
+				DataID:    types.NewAnyText(payload.AffectData.DataId),
+				ItemIndex: types.NewAnyText(itemIndex),
+				Action:    ports.Action(payload.AffectData.CommandMode),
 			})
 		if err != nil {
 			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to affect data in room", zap.Error(err))

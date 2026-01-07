@@ -72,8 +72,9 @@ const (
 
 // AffectDataParams - params for RoomsPort.AffectData
 type AffectDataParams struct {
-	RoomID models.RoomID
-	DataID types.AnyText
-	Action Action
-	Value  *models.Value
+	RoomID    models.RoomID
+	DataID    types.AnyText
+	ItemIndex types.AnyText // optional
+	Action    Action
+	Value     *models.Value
 }

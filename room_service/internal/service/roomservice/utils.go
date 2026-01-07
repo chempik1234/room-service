@@ -30,7 +30,7 @@ func (s *RoomService) sendError(ctx context.Context, stream grpc.BidiStreamingSe
 // if it's other command, we ensure roomID is valid.
 func (s *RoomService) getValidRoomID(in *r.Command) (roomIDValidated *models.RoomID, err error) {
 	// it's only omitted in create room
-	switch _ := in.Payload.(type) {
+	switch in.Payload.(type) {
 	case *r.Command_CreateRoom:
 		// skip, generate locally
 		break

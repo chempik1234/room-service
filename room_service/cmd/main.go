@@ -74,6 +74,8 @@ func main() {
 	default:
 		panic(fmt.Errorf("unknown read concern: '%s' (Use one of these: 'available', 'local', 'majority', 'linearizable', 'snapshot')", cfg.MongoDBRoomsRepo.ReadConcern))
 	}
+
+	// uses retry inside mongodb driver
 	roomServiceServer := roomservice.NewRoomService(
 		room.NewMongoDBRepository(mongoClient, room.MongoRepoParams{
 			Database:       cfg.MongoDBRoomsRepo.Database,

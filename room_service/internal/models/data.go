@@ -140,6 +140,97 @@ func (v *Value) SetMap(m map[string]Value) {
 	v.mapValue = &copyVal
 }
 
+// GetInt - get int64 value and true if type is int, false otherwise
+func (v *Value) GetInt() (int64, bool) {
+	if v.valueType == typeInt && v.intValue != nil {
+		return *v.intValue, true
+	}
+	return 0, false
+}
+
+// GetStr - get string value and true if type is string, false otherwise
+func (v *Value) GetStr() (string, bool) {
+	if v.valueType == typeStr && v.strValue != nil {
+		return *v.strValue, true
+	}
+	return "", false
+}
+
+// GetBool - get bool value and true if type is bool, false otherwise
+func (v *Value) GetBool() (bool, bool) {
+	if v.valueType == typeBool && v.boolValue != nil {
+		return *v.boolValue, true
+	}
+	return false, false
+}
+
+// GetFloat - get float64 value and true if type is float, false otherwise
+func (v *Value) GetFloat() (float64, bool) {
+	if v.valueType == typeFloat && v.floatValue != nil {
+		return *v.floatValue, true
+	}
+	return 0, false
+}
+
+// GetBytes - get bytes value and true if type is bytes, false otherwise
+func (v *Value) GetBytes() ([]byte, bool) {
+	if v.valueType == typeBytes && v.bytesValue != nil {
+		return *v.bytesValue, true
+	}
+	return nil, false
+}
+
+// GetList - get list value and true if type is list, false otherwise
+func (v *Value) GetList() ([]Value, bool) {
+	if v.valueType == typeList && v.listValue != nil {
+		return *v.listValue, true
+	}
+	return nil, false
+}
+
+// GetMap - get map value and true if type is map, false otherwise
+func (v *Value) GetMap() (map[string]Value, bool) {
+	if v.valueType == typeMap && v.mapValue != nil {
+		return *v.mapValue, true
+	}
+	return nil, false
+}
+
+// IsInt - check if value type is int
+func (v *Value) IsInt() bool {
+	return v.valueType == typeInt
+}
+
+// IsStr - check if value type is string
+func (v *Value) IsStr() bool {
+	return v.valueType == typeStr
+}
+
+// IsBool - check if value type is bool
+func (v *Value) IsBool() bool {
+	return v.valueType == typeBool
+}
+
+// IsFloat - check if value type is float
+func (v *Value) IsFloat() bool {
+	return v.valueType == typeFloat
+}
+
+// IsBytes - check if value type is bytes
+func (v *Value) IsBytes() bool {
+	return v.valueType == typeBytes
+}
+
+// IsList - check if value type is list
+func (v *Value) IsList() bool {
+	return v.valueType == typeList
+}
+
+// IsMap - check if value type is map
+func (v *Value) IsMap() bool {
+	return v.valueType == typeMap
+}
+
 // Equal - check if values are equal
 func (v *Value) Equal(v2 *Value) bool {
 	if v.valueType != v2.valueType {

@@ -11,9 +11,9 @@ import (
 //
 // supposed to be used for multiple things like RABBITMQ_RETRIES, EMAIL_RETRIES, etc.
 type RetryStrategyConfig struct {
-	Attempts          int     `env:"ATTEMPTS" envDefault:"3"`
-	DelayMilliseconds int     `env:"DELAY_MILLISECONDS" envDefault:"500"`
-	Backoff           float64 `env:"BACKOFF" envDefault:"1"`
+	Attempts          int     `env:"ATTEMPTS" env-default:"3"`
+	DelayMilliseconds int     `env:"DELAY_MILLISECONDS" env-default:"500"`
+	Backoff           float64 `env:"BACKOFF" env-default:"1"`
 }
 
 // ToStrategy converts an already read config to usable format which is retry.Strategy

@@ -1,0 +1,76 @@
+x-room_service-template: &room_service-template
+  # image: room_service
+  build:
+    context: ../room_service
+    dockerfile: ../docker/service.Dockerfile
+  restart: unless-stopped
+  # entrypoint: "sleep 1h"
+  depends_on:
+    redis:
+      condition: service_healthy
+    mongodb:
+      condition: service_healthy
+  env_file:
+    - ../config/.env
+
+
+services:
+  room_service:
+    <<: *room_service-template
+    ports:
+      - "50050:50050"
+    # scale: 1
+    networks:
+      - backend
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    expose:
+      - "6379"
+    env_file:
+      - ../config/.env
+    volumes:
+      - redis_data:/data
+    #   - ../redis/redis.conf:/usr/local/etc/redis/redis.conf maxmemory 524288000
+    command: ["redis-server", "--requirepass", "$${REDIS_PASSWORD}"]
+    # "/bin/sh -c redis-server --requirepass \"$${REDIS_PASSWORD:?REDIS_PASSWORD variable is not set}\""
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - backend
+
+  mongodb:
+    image: mongo:latest
+    env_file:
+      - ../config/.env
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # e2e_test:
+  #   build:
+  #     context: ../e2e_test
+  #     dockerfile: ../integration_test.Dockerfile
+  #   depends_on:
+  #     room_service:
+  #       condition: service_started
+  #   env_file:
+  #     - ../config/test/.env
+  #   network_mode: host
+
+volumes:
+  redis_data:
+
+networks:
+  backend:
+    driver: bridge

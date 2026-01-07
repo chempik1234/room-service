@@ -14,3 +14,24 @@ tasks:
     cmds:
       - golangci-lint run ./... --config ../golangci-lint.yml
     summary: Lint the code with golangci-lint
+
+  init_env:
+    dir: ./room_service
+    cmds:
+      - go run ./scripts --filepath=../config/.env.init
+    summary: init env file with variables used by golang code
+
+  up:
+    cmds:
+      - docker compose -f docker/docker-compose.yaml up -d
+    summary: docker compose up with -d
+
+  down:
+    cmds:
+      - docker compose -f docker/docker-compose.yaml down
+    summary: docker compose down
+
+  build:
+    cmds:
+      - docker compose -f docker/docker-compose.yaml build
+    summary: build all for docker compose

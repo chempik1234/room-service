@@ -88,13 +88,19 @@ func main() {
 	)
 	//endregion
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(interceptors.AddLogMiddleware))
+	// Build interceptor chain based on config
+	unaryInterceptors, streamInterceptors := interceptors.MiddlewaresForService(cfg.Service.UseAuth)
+
+	grpcServer := grpc.NewServer(
+		grpc.ChainUnaryInterceptor(unaryInterceptors...),
+		grpc.ChainStreamInterceptor(streamInterceptors...),
+	)
 	room_service.RegisterRoomServiceServer(grpcServer, roomServiceServer)
 	appServer := server.NewGracefulServer[*net.Listener](
 		grpcserver.NewGracefulServerImplementationGRPC(grpcServer))
 
 	//region run
-	ctx, stopCtx := context.WithCancel(context.Background())
+	ctx, stopCtx := context.WithCancel(ctx)
 	defer stopCtx()
 
 	logger.GetLoggerFromCtx(ctx).Info(ctx, "server starting :grpc_port", zap.Int("grpc_port", cfg.Service.GRPCPort))

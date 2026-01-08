@@ -8,6 +8,8 @@ type RoomServiceConfig struct {
 	GRPCPort int `yaml:"grpc_port" env:"GRPC_PORT" env-default:"50050"`
 	// RetryStrategy - retries for gRPC operations
 	RetryStrategy config.RetryStrategyConfig `yaml:"retry" env-prefix:"RETRY_"`
+	// UseAuth - enable API key authentication
+	UseAuth bool `env:"USE_AUTH" env-default:"true"`
 }
 
 // LogConfig - config struct for logging

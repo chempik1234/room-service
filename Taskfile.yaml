@@ -7,7 +7,11 @@ tasks:
         --go_out=./room_service
         --go-grpc_out=./room_service
         ./api/room_service/room_service.proto
-    summary: Generate gRPC code from protofile
+      - protoc -I .
+        --go_out=./integration_tests/happy_test
+        --go-grpc_out=./integration_tests/happy_test
+        ./api/room_service/room_service.proto
+    summary: Generate gRPC code from protofile - to all users of it
 
   lint:
     dir: ./room_service
@@ -35,3 +39,10 @@ tasks:
     cmds:
       - docker compose -f docker/docker-compose.yaml build
     summary: build all for docker compose
+
+  test:
+    cmds:
+      - docker compose -f integration_tests/test-compose.yaml up -d room_service redis mongodb
+      - docker compose -f integration_tests/test-compose.yaml up --build happy_test
+      - docker compose -f integration_tests/test-compose.yaml down
+    summary: Run all tests

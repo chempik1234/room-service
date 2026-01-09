@@ -24,21 +24,22 @@ ROOM_SERVICE_USE_AUTH=false # Disable auth (for development)
 ## Usage Example (Go)
 
 ```go
+package main
+
 import (
     "context"
     "google.golang.org/grpc"
     "google.golang.org/grpc/metadata"
 )
 
-conn, _ := grpc.Dial("localhost:50050", grpc.WithInsecure())
-client := NewRoomServiceClient(conn)
+func main() {
+	conn, _ := grpc.NewClient("localhost:50050", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client := NewRoomServiceClient(conn)
 
-// Add API key to metadata
-md := metadata.Pairs("x-api-key", "apikey")
-ctx := metadata.NewOutgoingContext(context.Background(), md)
-
-// Make authenticated request
-response, err := client.SingleCommand(ctx, &Command{...})
+	// Add API key to metadata
+	md := metadata.Pairs("x-api-key", "apikey")
+	ctx := metadata.NewOutgoingContext(context.Background(), md)
+}
 ```
 
 ## Usage Example (Python)
@@ -49,11 +50,6 @@ import grpc
 metadata = [('x-api-key', 'apikey')]
 channel = grpc.insecure_channel('localhost:50050')
 stub = room_service_pb2_grpc.RoomServiceStub(channel)
-
-response = stub.SingleCommand(
-    request=room_service_pb2.Command(...),
-    metadata=metadata
-)
 ```
 
 ## Testing with grpcurl

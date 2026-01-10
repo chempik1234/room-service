@@ -68,8 +68,8 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 			returnEvent, err := s.processCommand(commandScopeCtx, received)
 			if err != nil {
 				// if failed, send error
-				logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "error processing command", zap.Error(err))
-				s.sendError(commandScopeCtx, stream, returnEvent, err)
+				logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "error processing command in stream", zap.Error(err))
+				s.sendErrorToStream(commandScopeCtx, stream, returnEvent, err)
 				return
 			}
 
@@ -78,7 +78,7 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 			if err != nil {
 				// if failed to send, then try to send error about step 2
 				logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "failed to send event", zap.Error(err))
-				s.sendError(commandScopeCtx, stream, returnEvent, err)
+				s.sendErrorToStream(commandScopeCtx, stream, returnEvent, err)
 			}
 		}()
 	}
@@ -87,6 +87,25 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 // SingleCommand - is the handler for single command endpoint SingleCommand
 //
 // One incoming command - full room snapshot after command execution (or simple message about deleted room)
-func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r.SingleEvent, error) {
-	return nil, nil
+func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r.Event, error) {
+	commandScopeCtx, err := logger.New(context.WithValue(ctx, logger.KeyForRequestID, projectutils.GenerateRequestID()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to init logger: %w", err)
+	}
+
+	returnEvent, err := s.processCommand(commandScopeCtx, command)
+	if err != nil {
+		// if failed, show (and later return) error
+		logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "error processing single command", zap.Error(err))
+	}
+
+	if returnEvent == nil {
+		roomID := ""
+		if command.RoomId != nil {
+			roomID = *command.RoomId
+		}
+		returnEvent = quickErrorEvent(roomID, command.UserId, "internal error: returned event is nil!")
+	}
+
+	return returnEvent, nil
 }

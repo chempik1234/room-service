@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/chempik1234/room-service/internal/models"
+	"github.com/chempik1234/room-service/internal/projectutils"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
@@ -11,7 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-func (s *RoomService) sendError(ctx context.Context, stream grpc.BidiStreamingServer[r.Command, r.Event], baseEvent *r.Event, err error) {
+func (s *RoomService) sendErrorToStream(ctx context.Context, stream grpc.BidiStreamingServer[r.Command, r.Event], baseEvent *r.Event, err error) {
 	err2 := stream.Send(&r.Event{
 		Timestamp: baseEvent.Timestamp,
 		RoomId:    baseEvent.RoomId,
@@ -94,4 +95,13 @@ func (s *RoomService) noRepeatCommandID(ctx context.Context, in *r.Command) (str
 		}
 	}
 	return commandID, nil
+}
+
+func quickErrorEvent(roomID string, userID string, message string) *r.Event {
+	return &r.Event{
+		Timestamp: projectutils.NowTimestamp(),
+		RoomId:    roomID,
+		UserId:    userID,
+		Payload:   &r.Event_ErrorMessage{ErrorMessage: &r.ErrorMessage{Error: message}},
+	}
 }

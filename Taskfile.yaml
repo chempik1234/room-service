@@ -43,6 +43,11 @@ tasks:
   test:
     cmds:
       - docker compose -f integration_tests/test-compose.yaml up -d room_service redis mongodb
-      - docker compose -f integration_tests/test-compose.yaml up --build happy_test
+      - docker compose -f integration_tests/test-compose.yaml up --build --exit-code-from happy_test happy_test
       - docker compose -f integration_tests/test-compose.yaml down
     summary: Run all tests
+
+  test_abort:
+    cmds:
+      - docker compose -f integration_tests/test-compose.yaml down
+    summary: Stop integration tests docker compose if aborted

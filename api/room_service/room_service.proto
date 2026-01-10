@@ -159,14 +159,7 @@ message FullRoomSnapshotEventBody {
   string room_id = 4;
 }
 
-// --------------------- single command result
-
-message SingleEvent {
-  oneof result {
-    FullRoomSnapshotEventBody full_room = 1;
-    RoomDeletedEventBody room_deleted = 2;
-  }
-}
+// --------------------- single command result is the same as Event
 
 // --------------------- service
 
@@ -174,5 +167,5 @@ service RoomService {
   // main life cycle
   rpc Stream(stream Command) returns (stream Event);
   // just for fun
-  rpc SingleCommand(Command) returns (SingleEvent);
+  rpc SingleCommand(Command) returns (Event);
 }

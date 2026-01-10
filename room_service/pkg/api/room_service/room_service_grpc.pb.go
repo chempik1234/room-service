@@ -30,7 +30,7 @@ type RoomServiceClient interface {
 	// main life cycle
 	Stream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Command, Event], error)
 	// just for fun
-	SingleCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*SingleEvent, error)
+	SingleCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Event, error)
 }
 
 type roomServiceClient struct {
@@ -54,9 +54,9 @@ func (c *roomServiceClient) Stream(ctx context.Context, opts ...grpc.CallOption)
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RoomService_StreamClient = grpc.BidiStreamingClient[Command, Event]
 
-func (c *roomServiceClient) SingleCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*SingleEvent, error) {
+func (c *roomServiceClient) SingleCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Event, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SingleEvent)
+	out := new(Event)
 	err := c.cc.Invoke(ctx, RoomService_SingleCommand_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ type RoomServiceServer interface {
 	// main life cycle
 	Stream(grpc.BidiStreamingServer[Command, Event]) error
 	// just for fun
-	SingleCommand(context.Context, *Command) (*SingleEvent, error)
+	SingleCommand(context.Context, *Command) (*Event, error)
 	mustEmbedUnimplementedRoomServiceServer()
 }
 
@@ -85,7 +85,7 @@ type UnimplementedRoomServiceServer struct{}
 func (UnimplementedRoomServiceServer) Stream(grpc.BidiStreamingServer[Command, Event]) error {
 	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
 }
-func (UnimplementedRoomServiceServer) SingleCommand(context.Context, *Command) (*SingleEvent, error) {
+func (UnimplementedRoomServiceServer) SingleCommand(context.Context, *Command) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SingleCommand not implemented")
 }
 func (UnimplementedRoomServiceServer) mustEmbedUnimplementedRoomServiceServer() {}

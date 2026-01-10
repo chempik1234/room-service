@@ -4,87 +4,43 @@ import (
 	"fmt"
 	"github.com/chempik1234/room-service/internal/models"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
-	"reflect"
 )
 
-// PlainObjectToProtobufValue - convert regular object to room_service.Value
-func PlainObjectToProtobufValue(value any) (*r.Value, error) {
-	var curValue *r.Value
-	switch reflect.ValueOf(value).Kind() {
-	case reflect.Int64:
-		curValue = &r.Value{Value: &r.Value_IntValue{IntValue: value.(int64)}}
-	case reflect.Float64:
-		curValue = &r.Value{Value: &r.Value_FloatValue{FloatValue: value.(float64)}}
-	case reflect.String:
-		curValue = &r.Value{Value: &r.Value_StringValue{StringValue: value.(string)}}
-	case reflect.Bool:
-		curValue = &r.Value{Value: &r.Value_BoolValue{BoolValue: value.(bool)}}
-	case reflect.Map:
-		mapObjects := value.(map[string]any)
-		resultMap := make(map[string]*r.Value)
-		var err error
-		for key, valObj := range mapObjects {
-			resultMap[key], err = PlainObjectToProtobufValue(valObj)
-			if err != nil {
-				return nil, fmt.Errorf("error serializing map to Value: %w", err)
-			}
+// ValueObjectToProtobufValue - convert models.Value object to room_service.Value
+func ValueObjectToProtobufValue(value models.Value) *r.Value {
+	var result *r.Value
+	if value.IsBytes() {
+		bytes, _ := value.GetBytes()
+		result = &r.Value{Value: &r.Value_BinaryValue{BinaryValue: bytes}}
+	} else if value.IsBool() {
+		boolValue, _ := value.GetBool()
+		result = &r.Value{Value: &r.Value_BoolValue{BoolValue: boolValue}}
+	} else if value.IsFloat() {
+		floatValue, _ := value.GetFloat()
+		result = &r.Value{Value: &r.Value_FloatValue{FloatValue: floatValue}}
+	} else if value.IsInt() {
+		intValue, _ := value.GetInt()
+		result = &r.Value{Value: &r.Value_IntValue{IntValue: intValue}}
+	} else if value.IsStr() {
+		strValue, _ := value.GetStr()
+		result = &r.Value{Value: &r.Value_StringValue{StringValue: strValue}}
+	} else if value.IsList() {
+		listValue, _ := value.GetList()
+		protoList := make([]*r.Value, len(listValue))
+		for index, element := range listValue {
+			protoList[index] = ValueObjectToProtobufValue(element)
 		}
-	case reflect.Slice:
-		listObjects := value.([]any)
-		list := make([]*r.Value, len(listObjects))
-		var err error
-		for index, item := range listObjects {
-			list[index], err = PlainObjectToProtobufValue(item)
-			if err != nil {
-				return nil, fmt.Errorf("error serializing list to Value: %w", err)
-			}
+		result = &r.Value{Value: &r.Value_ListValue{ListValue: &r.ListValue{Values: protoList}}}
+	} else if value.IsMap() {
+		mapValue, _ := value.GetMap()
+		protoMap := make(map[string]*r.Value, len(mapValue))
+		for key, element := range mapValue {
+			protoMap[key] = ValueObjectToProtobufValue(element)
 		}
-	default:
-		return nil, fmt.Errorf("unknown type: %v", reflect.TypeOf(value).Kind())
-	}
-	return curValue, nil
-}
-
-// ProtobufValueToPlainObject - convert room_service.Value to regular object
-func ProtobufValueToPlainObject(value *r.Value) (any, error) {
-	if value == nil {
-		return nil, fmt.Errorf("nil value provided")
+		result = &r.Value{Value: &r.Value_MapValue{MapValue: &r.MapValue{Values: protoMap}}}
 	}
 
-	switch v := value.Value.(type) {
-	case *r.Value_IntValue:
-		return v.IntValue, nil
-	case *r.Value_FloatValue:
-		return v.FloatValue, nil
-	case *r.Value_StringValue:
-		return v.StringValue, nil
-	case *r.Value_BoolValue:
-		return v.BoolValue, nil
-	case *r.Value_BinaryValue:
-		return v.BinaryValue, nil
-	case *r.Value_MapValue:
-		resultMap := make(map[string]any)
-		for key, val := range v.MapValue.GetValues() {
-			obj, err := ProtobufValueToPlainObject(val)
-			if err != nil {
-				return nil, fmt.Errorf("error deserializing map value for key '%s': %w", key, err)
-			}
-			resultMap[key] = obj
-		}
-		return resultMap, nil
-	case *r.Value_ListValue:
-		resultList := make([]any, len(v.ListValue.GetValues()))
-		for index, val := range v.ListValue.GetValues() {
-			obj, err := ProtobufValueToPlainObject(val)
-			if err != nil {
-				return nil, fmt.Errorf("error deserializing list value at index %d: %w", index, err)
-			}
-			resultList[index] = obj
-		}
-		return resultList, nil
-	default:
-		return nil, fmt.Errorf("unknown value type: %T", v)
-	}
+	return result
 }
 
 // ProtobufValueToValueObject - convert room_service.Value to models.Value

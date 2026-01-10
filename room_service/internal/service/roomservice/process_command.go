@@ -13,6 +13,12 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	roomIDZapKey       = "room_id"
+	joinedUserIDZapKey = "joined_user_id"
+	kickedUserIDZapKey = "kicked_user_id"
+)
+
 func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Event, error) {
 	var err error
 
@@ -35,95 +41,135 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 	userIDValid, err = types.NewNotEmptyText(in.GetUserId())
 	if err != nil {
 		logger.GetLoggerFromCtx(ctx).Warn(ctx, "someone entered empty userID")
-		return returnEvent, errors.New("userID is empty")
+		err = errors.New("userID is empty") // it's put into returnedEvent later
 	}
 	//endregion
 
 	//region validate roomID
 	roomIDValidated, err := s.getValidRoomID(in)
 	if err != nil {
-		return returnEvent, fmt.Errorf("failed to get valid room id: %w", err)
+		err = fmt.Errorf("failed to get valid room id: %w", err) // it's put into returnedEvent later
 	}
 	//endregion
 
-	switch payload := in.Payload.(type) {
-	case *r.Command_CreateRoom:
-		var roomID models.RoomID
-		roomID, returnEvent.Payload, err = s.createRoom(ctx, userIDValid, payload)
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to create room", zap.Error(err))
-		}
-		returnEvent.RoomId = roomID.String()
-		break
-		//endregion
-	case *r.Command_DeleteRoom:
-		returnEvent.Payload, err = s.deleteRoom(ctx, userIDValid, roomIDValidated)
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to delete room", zap.Error(err))
-		}
-		break
-		//endregion
-	case *r.Command_JoinRoom:
-		joinedUserID, joinedUserName, joinedUserMetadata, err := s.getJoinedUserFull(payload.JoinRoom.UserFull)
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get joined user full", zap.Error(err))
-			return returnEvent, fmt.Errorf("failed to get joined user full: %w", err)
-		}
-		returnEvent.Payload, err = s.joinRoom(ctx, &roomServiceJoinRoomParams{
-			roomID:             roomIDValidated,
-			joinedUserID:       joinedUserID,
-			joinedUserName:     joinedUserName,
-			joinedUserMetadata: joinedUserMetadata,
-		})
-		break
-		//endregion
-	case *r.Command_LeaveRoom:
-		kickedUserIDValid, err := s.getKickedUserID(payload.LeaveRoom)
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get kicked user id", zap.Error(err))
-			return returnEvent, fmt.Errorf("failed to get kicked user id: %w", err)
-		}
+	if err == nil {
 
-		returnEvent.Payload, err = s.leaveRoom(ctx, &leaveRoomParams{
-			roomID:       roomIDValidated,
-			userID:       userIDValid,
-			kickedUserID: kickedUserIDValid,
-		})
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to leave room", zap.Error(err))
-			return returnEvent, fmt.Errorf("failed to leave room: %w", err)
-		}
-		break
-	case *r.Command_AffectData:
-		itemIndex := ""
-		if payload.AffectData.ItemIndex != nil {
-			itemIndex = *payload.AffectData.ItemIndex
-		}
+		switch payload := in.Payload.(type) {
+		case *r.Command_CreateRoom:
+			var roomID models.RoomID
+			roomID, returnEvent.Payload, err = s.createRoom(ctx, userIDValid, payload)
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to create room", zap.Error(err))
+				err = fmt.Errorf("failed to create room: %w", err) // it's put into returnedEvent later
+				break
+			}
 
-		returnEvent.Payload, err = s.affectDataInRoom(ctx,
-			payload.AffectData.DataValue,
-			payload.AffectData.CommandMode,
-			&affectDataParams{
-				RoomID:    roomIDValidated,
-				DataID:    types.NewAnyText(payload.AffectData.DataId),
-				ItemIndex: types.NewAnyText(itemIndex),
-				Action:    ports.Action(payload.AffectData.CommandMode),
+			returnEvent.RoomId = roomID.String()
+			logger.GetOrCreateLoggerFromCtx(ctx).Info(ctx, "created room", zap.Stringer(roomIDZapKey, &roomID))
+
+			break
+			//endregion
+		case *r.Command_DeleteRoom:
+			returnEvent.Payload, err = s.deleteRoom(ctx, userIDValid, roomIDValidated)
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to delete room", zap.Error(err))
+				err = fmt.Errorf("failed to delete room: %w", err) // it's put into returnedEvent later
+				break
+			}
+			logger.GetOrCreateLoggerFromCtx(ctx).Info(ctx, "deleted room", zap.Stringer(roomIDZapKey, roomIDValidated))
+			break
+			//endregion
+		case *r.Command_JoinRoom:
+			joinedUserID, joinedUserName, joinedUserMetadata, err := s.getJoinedUserFull(payload.JoinRoom.UserFull)
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get joined user full", zap.Error(err))
+				err = fmt.Errorf("failed to get joined user full: %w", err) // it's put into returnedEvent later
+				break
+			}
+			returnEvent.Payload, err = s.joinRoom(ctx, &roomServiceJoinRoomParams{
+				roomID:             roomIDValidated,
+				joinedUserID:       joinedUserID,
+				joinedUserName:     joinedUserName,
+				joinedUserMetadata: joinedUserMetadata,
 			})
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to affect data in room", zap.Error(err))
-			return returnEvent, fmt.Errorf("failed to affect data in room: %w", err)
+			logger.GetOrCreateLoggerFromCtx(ctx).Info(ctx, "joined room",
+				zap.Stringer(roomIDZapKey, roomIDValidated),
+				zap.Stringer(joinedUserIDZapKey, joinedUserID))
+			break
+			//endregion
+		case *r.Command_LeaveRoom:
+			kickedUserIDValid, err := s.getKickedUserID(payload.LeaveRoom)
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get kicked user id", zap.Error(err))
+				err = fmt.Errorf("failed to get kicked user id: %w", err) // it's put into returnedEvent later
+				break
+			}
+
+			returnEvent.Payload, err = s.leaveRoom(ctx, &leaveRoomParams{
+				roomID:       roomIDValidated,
+				userID:       userIDValid,
+				kickedUserID: kickedUserIDValid,
+			})
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to leave room", zap.Error(err))
+				err = fmt.Errorf("failed to leave room: %w", err) // it's put into returnedEvent later
+				break
+			}
+
+			logger.GetOrCreateLoggerFromCtx(ctx).Info(ctx, "user was kicked from room",
+				zap.Stringer(roomIDZapKey, roomIDValidated),
+				zap.Stringer(kickedUserIDZapKey, kickedUserIDValid))
+
+			break
+		case *r.Command_AffectData:
+			itemIndex := ""
+			if payload.AffectData.ItemIndex != nil {
+				itemIndex = *payload.AffectData.ItemIndex
+			}
+
+			fmt.Println("WOAH!")
+			fmt.Println("WOAH!", ports.Action(payload.AffectData.CommandMode))
+
+			returnEvent.Payload, err = s.affectDataInRoom(ctx,
+				payload.AffectData.DataValue,
+				payload.AffectData.CommandMode,
+				&affectDataParams{
+					RoomID:    roomIDValidated,
+					DataID:    types.NewAnyText(payload.AffectData.DataId),
+					ItemIndex: types.NewAnyText(itemIndex),
+					Action:    ports.Action(payload.AffectData.CommandMode),
+				})
+			fmt.Println("WOAH2")
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to affect data in room", zap.Error(err))
+				err = fmt.Errorf("failed to affect data in room: %w", err) // it's put into returnedEvent later
+				break
+			}
+
+			logger.GetLoggerFromCtx(ctx).Info(ctx, "changed data in room",
+				zap.Stringer(roomIDZapKey, roomIDValidated))
+
+			break
+		case *r.Command_RefreshRoom:
+			// TODO: rate limiter per room
+			returnEvent.Payload, err = s.refreshRoom(ctx, roomIDValidated)
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to refresh room", zap.Error(err))
+				err = fmt.Errorf("failed to refresh room: %w", err) // it's put into returnedEvent later
+				break
+			}
+
+			logger.GetLoggerFromCtx(ctx).Info(ctx, "asked for full room",
+				zap.Stringer(roomIDZapKey, roomIDValidated))
+
+			break
+		default:
+			panic("unknown type of command payload")
 		}
-		break
-	case *r.Command_RefreshRoom:
-		// TODO: rate limiter per room
-		returnEvent.Payload, err = s.refreshRoom(ctx, roomIDValidated)
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to refresh room", zap.Error(err))
-			return returnEvent, fmt.Errorf("failed to refresh room: %w", err)
-		}
-		break
-	default:
-		panic("unknown type of command payload")
+	}
+
+	if returnEvent.Payload == nil || err != nil {
+		returnEvent = quickErrorEvent(returnEvent.RoomId, returnEvent.UserId, err.Error())
 	}
 
 	return returnEvent, err

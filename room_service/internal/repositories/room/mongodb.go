@@ -91,8 +91,11 @@ func NewMongoDBRepository(client *mongo.Client, params MongoRepoParams) *MongoDB
 //
 // Create ID yourself
 func (s *MongoDBRepository) CreateRoom(ctx context.Context, room *models.Room) (newRoom *models.Room, err error) {
-	err = s.errIfRoomExists(ctx, room.ID.String())
-	if err != nil {
+	if room == nil {
+		return nil, fmt.Errorf("internal error: CreateRoom - room is %v", room)
+	}
+
+	if err = s.errIfRoomExists(ctx, room.ID.String()); err != nil {
 		return nil, err // already wrapped
 	}
 

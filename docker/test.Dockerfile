@@ -6,6 +6,4 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN go build -o integration-test ./main.go
-
-CMD ["./integration-test"]
+CMD ["go", "test", "-v", "./..."]

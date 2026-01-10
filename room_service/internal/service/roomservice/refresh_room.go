@@ -6,9 +6,7 @@ import (
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
-	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/wb-go/wbf/retry"
-	"go.uber.org/zap"
 )
 
 func (s *RoomService) refreshRoom(ctx context.Context, roomID *models.RoomID) (payload *r.Event_FullRoom, err error) {
@@ -39,11 +37,7 @@ func (s *RoomService) refreshRoom(ctx context.Context, roomID *models.RoomID) (p
 	roomValues := make(map[string]*r.Value, len(room.Values))
 
 	for key, value := range room.Values {
-		roomValues[key], err = PlainObjectToProtobufValue(value)
-		if err != nil {
-			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get room snapshot", zap.Error(err))
-			return payload, fmt.Errorf("failed to get room snapshot: %w", err)
-		}
+		roomValues[key] = ValueObjectToProtobufValue(value)
 	}
 
 	return &r.Event_FullRoom{

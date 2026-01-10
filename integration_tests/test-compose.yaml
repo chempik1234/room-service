@@ -19,6 +19,8 @@ services:
     <<: *room_service-template
     ports:
       - "50050:50050"
+    env_file:
+      - ./.env
     # scale: 1
     networks:
       - backend

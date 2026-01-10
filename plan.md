@@ -1,8 +1,7 @@
-1. simple protobuf
-2. in-memory room implementation
-    1. ports, repos
-    2. rooms exist offline for TTL
-3. handlers (stream for room lifecycle)
+1. rooms exist offline for TTL
+2. If you kick owner, random becomes the owner
+3. New commands:
+   1. change owner user
 4. USER_ONLY_1_ROOM=bool
 5. Query (e.g. list all rooms, get rooms meta)
 6. Tell if error caused by caller or is it internal

@@ -336,14 +336,14 @@ func (s *MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomS
 //
 // Room not found -> errors.ErrRoomDoesntExist
 // Data not found -> errors.ErrDataPieceDoesntExist
-func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) error {
+func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) (*models.Value, error) {
 	// First, check if room exists
 	roomExists, err := s.roomExists(ctx, params.RoomID.String())
 	if err != nil {
-		return err // already wrapped
+		return nil, err // already wrapped
 	}
 	if !roomExists {
-		return errors2.ErrQuick(errors2.ErrRoomDoesntExist, params.RoomID.String())
+		return nil, errors2.ErrQuick(errors2.ErrRoomDoesntExist, params.RoomID.String())
 	}
 
 	dataID := params.DataID.String()
@@ -365,24 +365,24 @@ func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectD
 		// REMOVE mode: remove from data[data_id] by index/key
 		itemIndexValid, err := types2.NewNotEmptyText(params.ItemIndex.String())
 		if err != nil {
-			return fmt.Errorf("invalid item_index: %w", err)
+			return nil, fmt.Errorf("invalid item_index: %w", err)
 		}
 
 		return s.removeData(ctx, params.RoomID.String(), dataID, itemIndexValid)
 
 	default:
-		return fmt.Errorf("unknown action: %d", params.Action)
+		return nil, fmt.Errorf("unknown action: %d", params.Action)
 	}
 }
 
 // setData - set data[data_id] = value in MongoDB
 //
 // if itemIndex != "" --> set data[data_id][itemIndex] = value
-func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, value *models.Value, itemIndex string) error {
+func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, value *models.Value, itemIndex string) (*models.Value, error) {
 	// Convert models.Value to BSON value
 	bsonValue, err := encodeModelValueToBSON(value)
 	if err != nil {
-		return fmt.Errorf("failed to encode value to BSON: %w", err)
+		return nil, fmt.Errorf("failed to encode value to BSON: %w", err)
 	}
 
 	filter := bson.M{"id": roomID}
@@ -397,17 +397,26 @@ func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, 
 
 	result, err := s.roomsCollection.UpdateOne(ctx, filter, update)
 	if err != nil {
-		return fmt.Errorf("mongo updateOne set data error: %w", err)
+		return nil, fmt.Errorf("mongo updateOne set data error: %w", err)
 	}
 	if result.MatchedCount == 0 {
-		return errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
+		return nil, errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
 	}
 
-	return nil
+	var resultValue *models.Value
+	if len(itemIndex) == 0 {
+		resultValue = value
+	} else {
+		if resultValue, err = s.valueInRoom(ctx, roomID, dataID); err != nil {
+			return nil, err // already wrapped
+		}
+	}
+
+	return resultValue, nil
 }
 
 // deleteData - delete data[data_id] from MongoDB
-func (s *MongoDBRepository) deleteData(ctx context.Context, roomID, dataID string) error {
+func (s *MongoDBRepository) deleteData(ctx context.Context, roomID, dataID string) (*models.Value, error) {
 	// check if "data" field exists
 	filter := bson.M{
 		"id":                           roomID,
@@ -416,10 +425,10 @@ func (s *MongoDBRepository) deleteData(ctx context.Context, roomID, dataID strin
 
 	count, err := s.roomsCollection.CountDocuments(ctx, filter)
 	if err != nil {
-		return fmt.Errorf("mongo countDocuments check data exists error: %w", err)
+		return nil, fmt.Errorf("mongo countDocuments check data exists error: %w", err)
 	}
 	if count == 0 {
-		return errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, dataID)
+		return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, dataID)
 	}
 
 	// delete the value from room.data
@@ -428,21 +437,21 @@ func (s *MongoDBRepository) deleteData(ctx context.Context, roomID, dataID strin
 
 	result, err := s.roomsCollection.UpdateOne(ctx, updateFilter, update)
 	if err != nil {
-		return fmt.Errorf("mongo updateOne delete data error: %w", err)
+		return nil, fmt.Errorf("mongo updateOne delete data error: %w", err)
 	}
 	if result.MatchedCount == 0 {
-		return errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
+		return nil, errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
 	}
 
-	return nil
+	return nil, nil
 }
 
 // appendData - append value to data[data_id] (only array)
-func (s *MongoDBRepository) appendData(ctx context.Context, roomID, dataID string, value *models.Value) error {
+func (s *MongoDBRepository) appendData(ctx context.Context, roomID, dataID string, value *models.Value) (*models.Value, error) {
 	// models.Value to BSON
 	bsonValue, err := encodeModelValueToBSON(value)
 	if err != nil {
-		return fmt.Errorf("failed to encode value to BSON: %w", err)
+		return nil, fmt.Errorf("failed to encode value to BSON: %w", err)
 	}
 
 	// check if room."data" exists
@@ -453,10 +462,10 @@ func (s *MongoDBRepository) appendData(ctx context.Context, roomID, dataID strin
 
 	count, err := s.roomsCollection.CountDocuments(ctx, filter)
 	if err != nil {
-		return fmt.Errorf("mongo countDocuments check data exists error: %w", err)
+		return nil, fmt.Errorf("mongo countDocuments check data exists error: %w", err)
 	}
 	if count == 0 {
-		return errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, dataID)
+		return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, dataID)
 	}
 
 	// Determine if we're appending to array or map
@@ -469,19 +478,24 @@ func (s *MongoDBRepository) appendData(ctx context.Context, roomID, dataID strin
 		// GPT note:
 		// If $push fails, it might be a map, try $mergeObjects or set for nested map
 		// For now, just return the error
-		return fmt.Errorf("mongo updateOne append data error: %w", err)
+		return nil, fmt.Errorf("mongo updateOne append data error: %w", err)
 	}
 	if result.MatchedCount == 0 {
-		return errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
+		return nil, errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
 	}
 
-	return nil
+	var resultValue *models.Value
+	if resultValue, err = s.valueInRoom(ctx, roomID, dataID); err != nil {
+		return nil, err // already wrapped
+	}
+
+	return resultValue, nil
 }
 
 // removeData - remove item from data[data_id] by index/key
 //
 // if itemIndex != "" --> remove item data[data_id][itemIndex]
-func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID string, itemIndex types2.NotEmptyText) error {
+func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID string, itemIndex types2.NotEmptyText) (*models.Value, error) {
 	// check if data_id in "data" field exists
 	removedItemPath := fmt.Sprintf("data.%s", dataID)
 
@@ -492,10 +506,10 @@ func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID strin
 
 	count, err := s.roomsCollection.CountDocuments(ctx, filter)
 	if err != nil {
-		return fmt.Errorf("mongo countDocuments check data exists error: %w", err)
+		return nil, fmt.Errorf("mongo countDocuments check data exists error: %w", err)
 	}
 	if count == 0 {
-		return errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, dataID)
+		return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, dataID)
 	}
 
 	// For REMOVE, we need to:
@@ -513,7 +527,7 @@ func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID strin
 			},
 		)).Decode(&doc)
 	if err != nil {
-		return fmt.Errorf("failed to get room's data by roomID: %w", err)
+		return nil, fmt.Errorf("failed to get room's data by roomID: %w", err)
 	}
 
 	// step 1.
@@ -523,7 +537,7 @@ func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID strin
 			// we need int for indexing in-memory: we find item by value, not by key, which is awful!
 			indexInt, err := strconv.Atoi(itemIndex.String())
 			if err != nil {
-				return fmt.Errorf("failed to convert itemIndex to int (item is array): %w", err)
+				return nil, fmt.Errorf("failed to convert itemIndex to int (item is array): %w", err)
 			}
 
 			// step 2.
@@ -532,10 +546,10 @@ func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID strin
 				bson.M{"$pull": bson.M{fmt.Sprintf("data.%s", dataID): bson.M{"$eq": value.([]any)[indexInt]}}})
 			// {"$pull": {"data.<data_id>": {"eq": <val data[<data_id>][<itemIndex>]> } } }
 			if err != nil {
-				return fmt.Errorf("mongo updateOne $pull data error (dataId: '%s', array_index: '%d'): %w", dataID, indexInt, err)
+				return nil, fmt.Errorf("mongo updateOne $pull data error (dataId: '%s', array_index: '%d'): %w", dataID, indexInt, err)
 			}
 			if res.ModifiedCount == 0 {
-				return errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, fmt.Errorf("%s (array_index='%d')", dataID, indexInt))
+				return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, fmt.Errorf("%s (array_index='%d')", dataID, indexInt))
 			}
 
 		case bson.M:
@@ -544,17 +558,26 @@ func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID strin
 			res, err := s.roomsCollection.UpdateOne(ctx, filter,
 				bson.M{"$unset": bson.M{fmt.Sprintf("data.%s.%s", dataID, itemIndex): ""}})
 			if err != nil {
-				return fmt.Errorf("mongo updateOne $unset data error (dataId: '%s', array_index: '%d'): %w", dataID, itemIndex.String(), err)
+				return nil, fmt.Errorf("mongo updateOne $unset data error (dataId: '%s', array_index: '%d'): %w", dataID, itemIndex.String(), err)
 			}
 			if res.ModifiedCount == 0 {
-				return errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, fmt.Errorf("%s (dict_key='%d')", dataID, itemIndex.String()))
+				return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, fmt.Errorf("%s (dict_key='%d')", dataID, itemIndex.String()))
 			}
 		default:
-			return errors2.ErrQuick(errors.ErrUnsupported, fmt.Sprintf("remove for type %T", valueType))
+			return nil, errors2.ErrQuick(errors.ErrUnsupported, fmt.Sprintf("remove for type %T", valueType))
 		}
 	}
 
-	return nil
+	var resultValue *models.Value
+	if len(itemIndex) == 0 {
+		resultValue = nil
+	} else {
+		if resultValue, err = s.valueInRoom(ctx, roomID, dataID); err != nil {
+			return nil, err // already wrapped
+		}
+	}
+
+	return resultValue, nil
 }
 
 func (s *MongoDBRepository) roomExists(ctx context.Context, id string) (bool, error) {
@@ -599,6 +622,26 @@ func (s *MongoDBRepository) errIfRoomDoesntExist(ctx context.Context, id string)
 	}
 
 	return nil
+}
+
+// valueInRoom - return whole value by data_id
+//
+// errors are wrapped already
+func (s *MongoDBRepository) valueInRoom(ctx context.Context, roomID string, dataID string) (*models.Value, error) {
+	valuePathInDB := "data." + dataID
+	raw, err := s.roomsCollection.FindOne(ctx, bson.M{"id": roomID}, options.FindOne().SetProjection(bson.M{valuePathInDB: 1})).Raw()
+	if err != nil {
+		return nil, fmt.Errorf("error while querying room value (data.%s): %w", dataID, err)
+	}
+	var val bson.RawValue
+	if val, err = raw.LookupErr(valuePathInDB); err != nil {
+		return nil, fmt.Errorf("error while querying room value (data.%s): queried data_id not in result", dataID)
+	}
+	result, err := decodeBSONValueToModelValue(val)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding room value (data.%s): %w", dataID, err)
+	}
+	return result, nil
 }
 
 // decodeBSONValueToModelValue - convert BSON RawValue to models.Value

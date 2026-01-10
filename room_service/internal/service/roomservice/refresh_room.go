@@ -37,7 +37,7 @@ func (s *RoomService) refreshRoom(ctx context.Context, roomID *models.RoomID) (p
 	roomValues := make(map[string]*r.Value, len(room.Values))
 
 	for key, value := range room.Values {
-		roomValues[key] = ValueObjectToProtobufValue(value)
+		roomValues[key] = ValueObjectToProtobufValue(&value)
 	}
 
 	return &r.Event_FullRoom{

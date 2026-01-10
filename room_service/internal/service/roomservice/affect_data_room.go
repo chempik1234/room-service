@@ -23,13 +23,17 @@ func (s *RoomService) affectDataInRoom(ctx context.Context, value *r.Value, data
 		return nil, fmt.Errorf("error deserializing value: %w", err)
 	}
 
+	var resultValue *models.Value
+
 	err = retry.Do(func() error {
-		return s.roomsRepo.AffectData(ctx, ports.AffectDataParams{
+		var errOp error
+		resultValue, errOp = s.roomsRepo.AffectData(ctx, ports.AffectDataParams{
 			RoomID: *params.RoomID,
 			DataID: params.DataID,
 			Action: params.Action,
 			Value:  plainValue,
 		})
+		return errOp
 	}, s.retryStrategy)
 	if err != nil {
 		return payload, fmt.Errorf("failed to affect data in room: %w", err)
@@ -39,7 +43,7 @@ func (s *RoomService) affectDataInRoom(ctx context.Context, value *r.Value, data
 	return &r.Event_DataEdited{
 		DataEdited: &r.DataEditedEventBody{
 			DataId:      params.DataID.String(),
-			DataValue:   nil,
+			DataValue:   ValueObjectToProtobufValue(resultValue),
 			CommandMode: dataEditMode,
 			RoomId:      params.RoomID.String(),
 		},

@@ -25,7 +25,7 @@ type RoomsPort interface {
 	// AffectData - set/delete whole data field or item in dict/list (depends on what models.Value is stored)
 	//
 	// The whole data storage is a KV storage that can store different values, including lists and dicts
-	AffectData(ctx context.Context, params AffectDataParams) error
+	AffectData(ctx context.Context, params AffectDataParams) (*models.Value, error)
 }
 
 // DeleteRoomParams - param set for RoomsPort.DeleteRoom method

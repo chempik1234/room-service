@@ -7,7 +7,7 @@ import (
 )
 
 // ValueObjectToProtobufValue - convert models.Value object to room_service.Value
-func ValueObjectToProtobufValue(value models.Value) *r.Value {
+func ValueObjectToProtobufValue(value *models.Value) *r.Value {
 	var result *r.Value
 	if value.IsBytes() {
 		bytes, _ := value.GetBytes()
@@ -28,14 +28,14 @@ func ValueObjectToProtobufValue(value models.Value) *r.Value {
 		listValue, _ := value.GetList()
 		protoList := make([]*r.Value, len(listValue))
 		for index, element := range listValue {
-			protoList[index] = ValueObjectToProtobufValue(element)
+			protoList[index] = ValueObjectToProtobufValue(&element)
 		}
 		result = &r.Value{Value: &r.Value_ListValue{ListValue: &r.ListValue{Values: protoList}}}
 	} else if value.IsMap() {
 		mapValue, _ := value.GetMap()
 		protoMap := make(map[string]*r.Value, len(mapValue))
 		for key, element := range mapValue {
-			protoMap[key] = ValueObjectToProtobufValue(element)
+			protoMap[key] = ValueObjectToProtobufValue(&element)
 		}
 		result = &r.Value{Value: &r.Value_MapValue{MapValue: &r.MapValue{Values: protoMap}}}
 	}

@@ -80,7 +80,7 @@ func main() {
 		room.NewMongoDBRepository(mongoClient, room.MongoRepoParams{
 			Database:       cfg.MongoDBRoomsRepo.Database,
 			RoomCollection: cfg.MongoDBRoomsRepo.RoomsCollection,
-			WriteConcern:   writeconcern.W1(), //.Custom(cfg.MongoDBRoomsRepo.WriteConcern),
+			WriteConcern:   writeconcern.Custom(cfg.MongoDBRoomsRepo.WriteConcern),
 			ReadConcern:    readConcern,
 		}),
 		commandcache.NewRedisCommandCache(redisClient, cfg.Redis.TTLSeconds*1000),

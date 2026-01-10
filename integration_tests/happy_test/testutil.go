@@ -192,3 +192,153 @@ func IntValue(i int64) *room_service.Value {
 		Value: &room_service.Value_IntValue{IntValue: i},
 	}
 }
+
+// StreamClient wraps the bidirectional streaming RPC
+type StreamClient struct {
+	stream room_service.RoomService_StreamClient
+}
+
+// OpenStream opens a bidirectional stream
+func (tc *TestClient) OpenStream(ctx context.Context) (*StreamClient, error) {
+	stream, err := tc.client.Stream(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open stream: %w", err)
+	}
+	return &StreamClient{stream: stream}, nil
+}
+
+// Send sends a command through the stream
+func (sc *StreamClient) Send(cmd *room_service.Command) error {
+	return sc.stream.Send(cmd)
+}
+
+// Recv receives an event from the stream
+func (sc *StreamClient) Recv() (*room_service.Event, error) {
+	return sc.stream.Recv()
+}
+
+// CloseSend closes the send direction of the stream
+func (sc *StreamClient) CloseSend() error {
+	return sc.stream.CloseSend()
+}
+
+// CreateRoomStream creates a room via stream and returns the room ID from the response event
+func (sc *StreamClient) CreateRoomStream(ctx context.Context, opts map[string]string) (string, error) {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    "test-user",
+		Payload: &room_service.Command_CreateRoom{
+			CreateRoom: &room_service.CreateRoomCommandBody{
+				RoomOptions: opts,
+			},
+		},
+	}
+
+	if err := sc.Send(cmd); err != nil {
+		return "", fmt.Errorf("send create room command failed: %w", err)
+	}
+
+	resp, err := sc.Recv()
+	if err != nil {
+		return "", fmt.Errorf("receive create room response failed: %w", err)
+	}
+
+	log.Printf("DEBUG: CreateRoomStream response: %+v", resp)
+
+	room := resp.GetRoomCreated()
+	if room == nil {
+		return "", fmt.Errorf("expected RoomCreated response, got: %+v", resp)
+	}
+
+	if room.GetRoomId() == "" {
+		return "", fmt.Errorf("expected non-empty room ID")
+	}
+
+	log.Printf("DEBUG: Created room ID via stream: %s", room.GetRoomId())
+	return room.GetRoomId(), nil
+}
+
+// JoinRoomStream joins a user to a room via stream
+func (sc *StreamClient) JoinRoomStream(roomID, userID, userName string) error {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    userID,
+		RoomId:    &roomID,
+		Payload: &room_service.Command_JoinRoom{
+			JoinRoom: &room_service.JoinRoomCommandBody{
+				UserFull: &room_service.User{
+					Id:   userID,
+					Name: userName,
+				},
+			},
+		},
+	}
+
+	return sc.Send(cmd)
+}
+
+// LeaveRoomStream makes a user leave a room via stream
+func (sc *StreamClient) LeaveRoomStream(roomID, userID, kickedUserID string) error {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    userID,
+		RoomId:    &roomID,
+		Payload: &room_service.Command_LeaveRoom{
+			LeaveRoom: &room_service.LeaveRoomCommandBody{
+				KickedUserId: kickedUserID,
+			},
+		},
+	}
+
+	return sc.Send(cmd)
+}
+
+// SetDataStream sets a data value in a room via stream
+func (sc *StreamClient) SetDataStream(roomID, dataID string, value *room_service.Value) error {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    "test-user",
+		RoomId:    &roomID,
+		Payload: &room_service.Command_AffectData{
+			AffectData: &room_service.SetAppendDeleteDataCommandBody{
+				DataId:      dataID,
+				DataValue:   value,
+				CommandMode: room_service.DateEditMode_SET,
+			},
+		},
+	}
+
+	return sc.Send(cmd)
+}
+
+// RefreshRoomStream requests a room snapshot via stream
+func (sc *StreamClient) RefreshRoomStream(roomID string) error {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    "test-user",
+		RoomId:    &roomID,
+		Payload: &room_service.Command_RefreshRoom{
+			RefreshRoom: &room_service.RefreshRoomCommandBody{
+				RefreshRoom: true,
+			},
+		},
+	}
+
+	return sc.Send(cmd)
+}
+
+// DeleteRoomStream deletes a room via stream
+func (sc *StreamClient) DeleteRoomStream(roomID string) error {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    "test-user",
+		RoomId:    &roomID,
+		Payload: &room_service.Command_DeleteRoom{
+			DeleteRoom: &room_service.DeleteRoomCommandBody{
+				DeleteApprove: true,
+			},
+		},
+	}
+
+	return sc.Send(cmd)
+}

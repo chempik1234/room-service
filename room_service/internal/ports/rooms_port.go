@@ -26,6 +26,10 @@ type RoomsPort interface {
 	//
 	// The whole data storage is a KV storage that can store different values, including lists and dicts
 	AffectData(ctx context.Context, params AffectDataParams) (*models.Value, error)
+	// SetOwnerUserID - try to set new owner ID
+	//
+	// errors.ErrUserNotInRoom if userID isn't in room
+	SetOwnerUserID(ctx context.Context, params SetOwnerUserIDParams) (bool, error)
 }
 
 // DeleteRoomParams - param set for RoomsPort.DeleteRoom method
@@ -77,4 +81,10 @@ type AffectDataParams struct {
 	ItemIndex types.AnyText // optional
 	Action    Action
 	Value     *models.Value
+}
+
+// SetOwnerUserIDParams - params for RoomsPort.SetOwnerUserID
+type SetOwnerUserIDParams struct {
+	RoomID     models.RoomID
+	NewOwnerID types.NotEmptyText
 }

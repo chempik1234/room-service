@@ -19,7 +19,8 @@ var ErrDataPieceDoesntExist = errors.New("data piece does not exist")
 
 // ErrQuick - create quick error description:
 //
-//	err := errors2.ErrQuick(errors2.ErrRoomIDAlreadyExists, room.ID.String())
+//		err := errors2.ErrQuick(errors2.ErrRoomIDAlreadyExists, room.ID.String())
+//	 // return fmt.Errorf("%w: %v", err, quickArg)
 func ErrQuick(err error, quickArg any) error {
 	return fmt.Errorf("%w: %v", err, quickArg)
 }

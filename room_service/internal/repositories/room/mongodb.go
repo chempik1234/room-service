@@ -245,6 +245,60 @@ func (s *MongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoom
 	return nil
 }
 
+// SetOwnerUserID - try to set new owner ID (MongoDB)
+//
+// errors.ErrUserNotInRoom if userID isn't in room
+func (s *MongoDBRepository) SetOwnerUserID(ctx context.Context, params ports.SetOwnerUserIDParams) (bool, error) {
+	// we need these fields
+	var mongoRoom struct {
+		OwnerUserID string `bson:"owner_user_id"`
+		Users       []struct {
+			ID string `bson:"id"`
+		} `bson:"users"`
+	}
+
+	// uses retry inside mongodb driver
+	filter := bson.M{"id": params.RoomID.String()}
+	err := s.roomsCollection.FindOne(ctx, filter).Decode(&mongoRoom)
+	if err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return false, errors2.ErrQuick(errors2.ErrRoomDoesntExist, params.RoomID.String())
+		}
+		return false, fmt.Errorf("mongo findOne room snapshot error: %w", err)
+	}
+
+	// early exit
+	if mongoRoom.OwnerUserID == params.NewOwnerID.String() {
+		return false, nil
+	}
+
+	// check if user is in the room
+	userExists := false
+	for _, user := range mongoRoom.Users {
+		if user.ID == params.NewOwnerID.String() {
+			userExists = true
+			break
+		}
+	}
+
+	if !userExists {
+		return false, errors2.ErrQuick(errors2.ErrUserNotInRoom,
+			fmt.Sprintf("(roomID: '%s' userID: '%s')",
+				params.RoomID.String(),
+				params.NewOwnerID.String()))
+	}
+
+	res, err := s.roomsCollection.UpdateOne(ctx, filter, bson.M{"$set": bson.M{"owner_user_id": params.NewOwnerID.String()}})
+	if err != nil {
+		return false, fmt.Errorf("mongo updateOne update user in room error: %w", err)
+	}
+	if res.MatchedCount == 0 {
+		return false, fmt.Errorf("internal error: room was queried for validation, but not found when updating")
+	}
+
+	return mongoRoom.OwnerUserID != params.NewOwnerID.String(), nil
+}
+
 // RoomSnapshot - return a whole sight on room - ownerID, room data KV, roomID... (MongoDB)
 //
 // Room not found -> errors.ErrRoomDoesntExist

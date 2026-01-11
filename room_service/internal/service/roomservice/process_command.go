@@ -17,6 +17,7 @@ const (
 	roomIDZapKey       = "room_id"
 	joinedUserIDZapKey = "joined_user_id"
 	kickedUserIDZapKey = "kicked_user_id"
+	ownerUserIDZapKey  = "owner_user_id"
 )
 
 func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Event, error) {
@@ -82,8 +83,8 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 		case *r.Command_JoinRoom:
 			joinedUserID, joinedUserName, joinedUserMetadata, err := s.getJoinedUserFull(payload.JoinRoom.UserFull)
 			if err != nil {
-				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get joined user full", zap.Error(err))
-				err = fmt.Errorf("failed to get joined user full: %w", err) // it's put into returnedEvent later
+				logger.GetLoggerFromCtx(ctx).Warn(ctx, "invalid join room params from client", zap.Error(err))
+				err = fmt.Errorf("invalid join room params from client: %w", err) // it's put into returnedEvent later
 				break
 			}
 			returnEvent.Payload, err = s.joinRoom(ctx, &roomServiceJoinRoomParams{
@@ -100,8 +101,8 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 		case *r.Command_LeaveRoom:
 			kickedUserIDValid, err := s.getKickedUserID(payload.LeaveRoom)
 			if err != nil {
-				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get kicked user id", zap.Error(err))
-				err = fmt.Errorf("failed to get kicked user id: %w", err) // it's put into returnedEvent later
+				logger.GetLoggerFromCtx(ctx).Warn(ctx, "invalid kicked_user_id", zap.Error(err))
+				err = fmt.Errorf("invalid kicked_user_id: %w", err) // it's put into returnedEvent later
 				break
 			}
 
@@ -127,9 +128,6 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 				itemIndex = *payload.AffectData.ItemIndex
 			}
 
-			fmt.Println("WOAH!")
-			fmt.Println("WOAH!", ports.Action(payload.AffectData.CommandMode))
-
 			returnEvent.Payload, err = s.affectDataInRoom(ctx,
 				payload.AffectData.DataValue,
 				payload.AffectData.CommandMode,
@@ -139,7 +137,6 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 					ItemIndex: types.NewAnyText(itemIndex),
 					Action:    ports.Action(payload.AffectData.CommandMode),
 				})
-			fmt.Println("WOAH2")
 			if err != nil {
 				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to affect data in room", zap.Error(err))
 				err = fmt.Errorf("failed to affect data in room: %w", err) // it's put into returnedEvent later
@@ -148,6 +145,28 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 
 			logger.GetLoggerFromCtx(ctx).Info(ctx, "changed data in room",
 				zap.Stringer(roomIDZapKey, roomIDValidated))
+
+			break
+		case *r.Command_SetOwner:
+			var newOwnerID types.NotEmptyText
+			newOwnerID, err = types.NewNotEmptyText(payload.SetOwner.GetNewOwnerId())
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Warn(ctx, "invalid new_owner_id from client", zap.Error(err))
+				err = fmt.Errorf("invalid new_owner_id from client: %w", err)
+				break
+			}
+			returnEvent.Payload, err = s.setOwner(ctx, &roomServiceSetOwnerParams{
+				roomID:     roomIDValidated,
+				newOwnerID: newOwnerID,
+			})
+
+			if err != nil {
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to set owner of room",
+					zap.Stringer(roomIDZapKey, roomIDValidated),
+					zap.Stringer(ownerUserIDZapKey, newOwnerID),
+					zap.Error(err))
+				err = fmt.Errorf("failed to set owner of room: %w", err)
+			}
 
 			break
 		case *r.Command_RefreshRoom:

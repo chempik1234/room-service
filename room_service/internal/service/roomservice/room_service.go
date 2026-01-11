@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/chempik1234/room-service/internal/ports"
-	"github.com/chempik1234/room-service/internal/projectutils"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/wb-go/wbf/retry"
@@ -57,7 +56,7 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 		// endregion
 
 		// 2) ctx - commandScopeCtx stores command ID and logger
-		commandScopeCtx, err := logger.New(context.WithValue(context.Background(), logger.KeyForRequestID, projectutils.GenerateRequestID()))
+		commandScopeCtx, err := newCommandScopeCtx(context.Background())
 		if err != nil {
 			return fmt.Errorf("failed to init logger: %w", err)
 		}
@@ -88,7 +87,7 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 //
 // One incoming command - full room snapshot after command execution (or simple message about deleted room)
 func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r.Event, error) {
-	commandScopeCtx, err := logger.New(context.WithValue(ctx, logger.KeyForRequestID, projectutils.GenerateRequestID()))
+	commandScopeCtx, err := newCommandScopeCtx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init logger: %w", err)
 	}
@@ -108,4 +107,24 @@ func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r
 	}
 
 	return returnEvent, nil
+}
+
+// RoomsList - get rooms list with no inner data and no users list
+func (s *RoomService) RoomsList(ctx context.Context, _ *r.EmptyMessage) (*r.RoomsShortList, error) {
+	roomsList, err := s.roomsRepo.RoomsList(ctx)
+	if err != nil {
+		logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to list rooms", zap.Error(err))
+		return nil, fmt.Errorf("failed to list rooms: %w", err)
+	}
+
+	protoRoomsList := make([]*r.RoomShort, len(roomsList))
+	for i, room := range roomsList {
+		protoRoomsList[i] = &r.RoomShort{
+			RoomOptions: room.Options,
+			RoomId:      room.ID.String(),
+			RoomOwnerId: room.OwnerUserID.String(),
+		}
+	}
+
+	return &r.RoomsShortList{Rooms: protoRoomsList}, err
 }

@@ -6,8 +6,10 @@ import (
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 	"github.com/wb-go/wbf/retry"
+	"go.uber.org/zap"
 )
 
 type affectDataParams struct {
@@ -33,6 +35,9 @@ func (s *RoomService) affectDataInRoom(ctx context.Context, value *r.Value, data
 			Action: params.Action,
 			Value:  plainValue,
 		})
+		if errOp != nil {
+			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to affect data, retrying", zap.Error(err))
+		}
 		return errOp
 	}, s.retryStrategy)
 	if err != nil {

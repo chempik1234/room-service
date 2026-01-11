@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"github.com/chempik1234/room-service/internal/models"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 	"github.com/wb-go/wbf/retry"
+	"go.uber.org/zap"
 )
 
 func (s *RoomService) createRoom(ctx context.Context, userID types.NotEmptyText, payload *r.Command_CreateRoom) (roomID models.RoomID, roomCreatedPayload *r.Event_RoomCreated, err error) {
@@ -24,6 +26,9 @@ func (s *RoomService) createRoom(ctx context.Context, userID types.NotEmptyText,
 		var err error
 
 		resultRoom, err = s.roomsRepo.CreateRoom(ctx, newRoom) // don't rewrite like "newRoom, err = ..." !!!
+		if err != nil {
+			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to create a new room, retrying", zap.Error(err))
+		}
 		return err
 	}, s.retryStrategy)
 	if err != nil {

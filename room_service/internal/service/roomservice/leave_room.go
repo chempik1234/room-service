@@ -6,8 +6,10 @@ import (
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 	"github.com/wb-go/wbf/retry"
+	"go.uber.org/zap"
 )
 
 type leaveRoomParams struct {
@@ -18,11 +20,15 @@ type leaveRoomParams struct {
 
 func (s *RoomService) leaveRoom(ctx context.Context, params *leaveRoomParams) (payload *r.Event_LeftRoom, err error) {
 	err = retry.Do(func() error {
-		return s.roomsRepo.LeaveRoom(ctx, ports.LeaveRoomParams{
+		errRepo := s.roomsRepo.LeaveRoom(ctx, ports.LeaveRoomParams{
 			RoomID:              *params.roomID,
 			CommandCallerUserID: params.userID,
 			KickedUserID:        params.kickedUserID,
 		})
+		if errRepo != nil {
+			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to leave a room, retrying", zap.Error(err))
+		}
+		return errRepo
 	}, s.retryStrategy)
 	if err != nil {
 		return payload, fmt.Errorf("failed to leave room: %w", err)

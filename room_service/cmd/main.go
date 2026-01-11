@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/chempik1234/room-service/internal/config"
 	"github.com/chempik1234/room-service/internal/repositories/commandcache"
-	"github.com/chempik1234/room-service/internal/repositories/room"
+	mongodb2 "github.com/chempik1234/room-service/internal/repositories/room/mongodb"
 	"github.com/chempik1234/room-service/internal/service/roomservice"
 	"github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/room-service/pkg/transport/grpc/interceptors"
@@ -75,12 +75,28 @@ func main() {
 		panic(fmt.Errorf("unknown read concern: '%s' (Use one of these: 'available', 'local', 'majority', 'linearizable', 'snapshot')", cfg.MongoDBRoomsRepo.ReadConcern))
 	}
 
+	var writeConcern *writeconcern.WriteConcern
+	switch cfg.MongoDBRoomsRepo.WriteConcern {
+	case "w: 0":
+		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to w: 0")
+		writeConcern = writeconcern.Unacknowledged()
+		break
+	case "w: 1":
+		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to w: 1")
+		writeConcern = writeconcern.W1()
+		break
+	default:
+		logger.GetLoggerFromCtx(ctx).Info(ctx, "w concern is custom", zap.String("write_concern", cfg.MongoDBRoomsRepo.WriteConcern))
+		writeConcern = writeconcern.Custom(cfg.MongoDBRoomsRepo.WriteConcern)
+		break
+	}
+
 	// uses retry inside mongodb driver
 	roomServiceServer := roomservice.NewRoomService(
-		room.NewMongoDBRepository(mongoClient, room.MongoRepoParams{
+		mongodb2.NewMongoDBRepository(mongoClient, mongodb2.MongoRepoParams{
 			Database:       cfg.MongoDBRoomsRepo.Database,
 			RoomCollection: cfg.MongoDBRoomsRepo.RoomsCollection,
-			WriteConcern:   writeconcern.Custom(cfg.MongoDBRoomsRepo.WriteConcern),
+			WriteConcern:   writeConcern,
 			ReadConcern:    readConcern,
 		}),
 		commandcache.NewRedisCommandCache(redisClient, cfg.Redis.TTLSeconds*1000),
@@ -89,6 +105,9 @@ func main() {
 	//endregion
 
 	// Build interceptor chain based on config
+	if cfg.Service.UseAuth {
+		interceptors.SetAPIKey(cfg.Service.ApiKey)
+	}
 	unaryInterceptors, streamInterceptors := interceptors.MiddlewaresForService(cfg.Service.UseAuth)
 
 	grpcServer := grpc.NewServer(

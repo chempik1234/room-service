@@ -28,10 +28,14 @@ func (s *RoomService) joinRoom(ctx context.Context, params *roomServiceJoinRoomP
 
 	//region join room logic
 	err = retry.Do(func() error {
-		return s.roomsRepo.JoinRoom(ctx, ports.JoinRoomParams{
+		errInner := s.roomsRepo.JoinRoom(ctx, ports.JoinRoomParams{
 			RoomID:   *params.roomID,
 			UserFull: userModel,
 		})
+		if errInner != nil {
+			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to join a room, retrying", zap.Error(err))
+		}
+		return errInner
 	}, s.retryStrategy)
 	if err != nil {
 		logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to join room", zap.Error(err))

@@ -105,3 +105,7 @@ func quickErrorEvent(roomID string, userID string, message string) *r.Event {
 		Payload:   &r.Event_ErrorMessage{ErrorMessage: &r.ErrorMessage{Error: message}},
 	}
 }
+
+func newCommandScopeCtx(ctx context.Context) (context.Context, error) {
+	return logger.New(context.WithValue(context.Background(), logger.KeyForRequestID, projectutils.GenerateRequestID()))
+}

@@ -6,7 +6,9 @@ import (
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
 	"github.com/wb-go/wbf/retry"
+	"go.uber.org/zap"
 )
 
 func (s *RoomService) refreshRoom(ctx context.Context, roomID *models.RoomID) (payload *r.Event_FullRoom, err error) {
@@ -17,6 +19,9 @@ func (s *RoomService) refreshRoom(ctx context.Context, roomID *models.RoomID) (p
 		room, errSnapshot = s.roomsRepo.RoomSnapshot(ctx, ports.RoomSnapshotParams{
 			RoomID: *roomID,
 		})
+		if errSnapshot != nil {
+			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to retrieve a full room snapshot, retrying", zap.Error(errSnapshot))
+		}
 		return errSnapshot
 	}, s.retryStrategy)
 	if err != nil {

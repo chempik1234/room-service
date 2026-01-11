@@ -10,6 +10,8 @@ type RoomServiceConfig struct {
 	RetryStrategy config.RetryStrategyConfig `yaml:"retry" env-prefix:"RETRY_"`
 	// UseAuth - enable API key authentication
 	UseAuth bool `env:"USE_AUTH" env-default:"true"`
+	// ApiKey - API key for authentication (only used if UseAuth is true)
+	ApiKey string `env:"API_KEY" env-default:"apikey"`
 }
 
 // LogConfig - config struct for logging
@@ -25,5 +27,5 @@ type MongoDBRoomsRepoConfig struct {
 	Database        string `yaml:"database" env:"DATABASE" env-default:"rooms_db"`
 	RoomsCollection string `yaml:"rooms_collection" env:"ROOMS_COLLECTION" env-default:"rooms"`
 	ReadConcern     string `yaml:"read_concern" env:"READ_CONCERN" env-default:"available"`
-	WriteConcern    string `yaml:"write_concern" env:"WRITE_CONCERN" env-default:"w: majority, j: true"`
+	WriteConcern    string `yaml:"write_concern" env:"WRITE_CONCERN" env-default:""`
 }

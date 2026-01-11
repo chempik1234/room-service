@@ -15,15 +15,21 @@ import (
 const (
 	// APIKeyHeader is the metadata key for API key authentication
 	APIKeyHeader = "x-api-key"
-	// APIKey is the hardcoded API key for authentication
-	// TODO: Replace with Redis-based API key storage
-	APIKey = "apikey"
 )
+
+// apiKey is the configured API key for authentication
+// Set by SetAPIKey before starting the server
+var apiKey string = "apikey" // default for backwards compatibility
+
+// SetAPIKey sets the API key for authentication
+func SetAPIKey(key string) {
+	apiKey = key
+}
 
 // APIKeyAuth validates API key for unary RPCs
 func APIKeyAuth(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-	apiKey, err := extractAPIKey(ctx)
-	if err != nil || apiKey != APIKey {
+	clientKey, err := extractAPIKey(ctx)
+	if err != nil || clientKey != apiKey {
 		logger.GetOrCreateLoggerFromCtx(ctx).Warn(ctx, "API key validation failed",
 			zap.String("method", info.FullMethod),
 			zap.Error(err),
@@ -38,8 +44,8 @@ func APIKeyAuth(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo
 func APIKeyAuthStream(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	ctx := ss.Context()
 
-	apiKey, err := extractAPIKey(ctx)
-	if err != nil || apiKey != APIKey {
+	clientKey, err := extractAPIKey(ctx)
+	if err != nil || clientKey != apiKey {
 		logger.GetOrCreateLoggerFromCtx(ctx).Warn(ctx, "API key validation failed (stream)",
 			zap.String("method", info.FullMethod),
 			zap.Error(err),

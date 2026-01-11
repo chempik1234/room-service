@@ -27,6 +27,9 @@ func (s *RoomService) setOwner(ctx context.Context, params *roomServiceSetOwnerP
 			RoomID:     *params.roomID,
 			NewOwnerID: params.newOwnerID,
 		})
+		if errInternal != nil {
+			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to set owner of a room, retrying", zap.Error(err))
+		}
 		return errInternal
 	}, s.retryStrategy)
 	if err != nil {

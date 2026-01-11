@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	RoomService_Stream_FullMethodName        = "/api.RoomService/Stream"
 	RoomService_SingleCommand_FullMethodName = "/api.RoomService/SingleCommand"
+	RoomService_RoomsList_FullMethodName     = "/api.RoomService/RoomsList"
 )
 
 // RoomServiceClient is the client API for RoomService service.
@@ -31,6 +32,8 @@ type RoomServiceClient interface {
 	Stream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Command, Event], error)
 	// just for fun
 	SingleCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Event, error)
+	// return rooms with users and options, no inner data
+	RoomsList(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*RoomsShortList, error)
 }
 
 type roomServiceClient struct {
@@ -64,6 +67,16 @@ func (c *roomServiceClient) SingleCommand(ctx context.Context, in *Command, opts
 	return out, nil
 }
 
+func (c *roomServiceClient) RoomsList(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*RoomsShortList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RoomsShortList)
+	err := c.cc.Invoke(ctx, RoomService_RoomsList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoomServiceServer is the server API for RoomService service.
 // All implementations must embed UnimplementedRoomServiceServer
 // for forward compatibility.
@@ -72,6 +85,8 @@ type RoomServiceServer interface {
 	Stream(grpc.BidiStreamingServer[Command, Event]) error
 	// just for fun
 	SingleCommand(context.Context, *Command) (*Event, error)
+	// return rooms with users and options, no inner data
+	RoomsList(context.Context, *EmptyMessage) (*RoomsShortList, error)
 	mustEmbedUnimplementedRoomServiceServer()
 }
 
@@ -87,6 +102,9 @@ func (UnimplementedRoomServiceServer) Stream(grpc.BidiStreamingServer[Command, E
 }
 func (UnimplementedRoomServiceServer) SingleCommand(context.Context, *Command) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SingleCommand not implemented")
+}
+func (UnimplementedRoomServiceServer) RoomsList(context.Context, *EmptyMessage) (*RoomsShortList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RoomsList not implemented")
 }
 func (UnimplementedRoomServiceServer) mustEmbedUnimplementedRoomServiceServer() {}
 func (UnimplementedRoomServiceServer) testEmbeddedByValue()                     {}
@@ -134,6 +152,24 @@ func _RoomService_SingleCommand_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoomService_RoomsList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EmptyMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoomServiceServer).RoomsList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoomService_RoomsList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoomServiceServer).RoomsList(ctx, req.(*EmptyMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoomService_ServiceDesc is the grpc.ServiceDesc for RoomService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -144,6 +180,10 @@ var RoomService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SingleCommand",
 			Handler:    _RoomService_SingleCommand_Handler,
+		},
+		{
+			MethodName: "RoomsList",
+			Handler:    _RoomService_RoomsList_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -5,6 +5,8 @@ option go_package = "pkg/api/room_service";
 package api;
 
 // --------------------- universal types
+message EmptyMessage {}
+
 message ErrorMessage {
   string error = 1;
 }
@@ -44,6 +46,12 @@ message User {
   string name = 2;
   map<string, string> metadata = 3; // what if client wants to store some data e.g. avatar id
   // int64 joined_at = 4;
+}
+
+message RoomShort {
+  map<string, string> room_options = 1; // game type, max users, any constant metadata
+  string room_id = 2;
+  string room_owner_id = 3;
 }
 
 message RoomData {
@@ -172,6 +180,12 @@ message FullRoomSnapshotEventBody {
 
 // --------------------- single command result is the same as Event
 
+// --------------------- query results
+
+message RoomsShortList {
+  repeated RoomShort rooms = 1;
+}
+
 // --------------------- service
 
 service RoomService {
@@ -179,4 +193,11 @@ service RoomService {
   rpc Stream(stream Command) returns (stream Event);
   // just for fun
   rpc SingleCommand(Command) returns (Event);
+
+  // commands region for GET "questions" that only client needs us to answer
+
+  // return rooms with users and options, no inner data
+  rpc RoomsList(EmptyMessage) returns (RoomsShortList);
+
+  // maybe some other operations
 }

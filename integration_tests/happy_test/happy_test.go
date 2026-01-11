@@ -483,3 +483,129 @@ func TestRoomsList(t *testing.T) {
 
 	t.Logf("Successfully listed %d rooms", len(roomsList.Rooms))
 }
+
+// TestOwnerReassignmentOnLeave tests that when the owner leaves, a random user becomes the new owner
+func TestOwnerReassignmentOnLeave(t *testing.T) {
+	client, err := NewTestClient(serviceAddr)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+
+	// Create a room (the creator "test-user" becomes the owner)
+	roomID, err := client.CreateRoom(ctx, nil)
+	if err != nil {
+		t.Fatalf("CreateRoom failed: %v", err)
+	}
+	t.Logf("Created room: %s", roomID)
+
+	// Verify the initial owner is "test-user"
+	roomsList, err := client.RoomsList(ctx)
+	if err != nil {
+		t.Fatalf("RoomsList failed: %v", err)
+	}
+
+	var initialOwner string
+	for _, room := range roomsList.Rooms {
+		if room.RoomId == roomID {
+			initialOwner = room.RoomOwnerId
+			break
+		}
+	}
+
+	if initialOwner == "" {
+		t.Fatal("Could not find initial owner")
+	}
+	t.Logf("Initial owner: %s", initialOwner)
+
+	// Multiple users join the room
+	users := []string{"user1", "user2", "user3"}
+	userNames := []string{"Alice", "Bob", "Charlie"}
+
+	for i, userID := range users {
+		err = client.JoinRoom(ctx, roomID, userID, userNames[i])
+		if err != nil {
+			t.Fatalf("JoinRoom failed for %s: %v", userID, err)
+		}
+		t.Logf("User %s joined room", userID)
+	}
+
+	// Verify all users are in the room
+	snapshot, err := client.GetRoomSnapshot(ctx, roomID)
+	if err != nil {
+		t.Fatalf("GetRoomSnapshot failed: %v", err)
+	}
+
+	// Should have 3 users (user1, user2, user3) plus potentially the creator
+	expectedUserCount := len(users)
+	if len(snapshot.Users) < expectedUserCount {
+		t.Errorf("Expected at least %d users, got %d", expectedUserCount, len(snapshot.Users))
+	}
+
+	// The owner leaves
+	err = client.LeaveRoom(ctx, roomID, initialOwner, initialOwner)
+	if err != nil {
+		t.Fatalf("LeaveRoom failed for owner %s: %v", initialOwner, err)
+	}
+	t.Logf("Owner %s left the room", initialOwner)
+
+	// Verify a new owner was assigned (one of the remaining users)
+	roomsList, err = client.RoomsList(ctx)
+	if err != nil {
+		t.Fatalf("RoomsList after owner leave failed: %v", err)
+	}
+
+	var newOwner string
+	for _, room := range roomsList.Rooms {
+		if room.RoomId == roomID {
+			newOwner = room.RoomOwnerId
+			break
+		}
+	}
+
+	if newOwner == "" {
+		t.Fatal("New owner ID is empty after original owner left")
+	}
+
+	if newOwner == initialOwner {
+		t.Errorf("Expected new owner to be different from original owner, but both are %s", newOwner)
+	}
+
+	// The new owner should be one of the users who joined
+	found := false
+	for _, userID := range users {
+		if newOwner == userID {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		// The new owner might be the creator if they joined, let's check the snapshot users
+		t.Logf("Warning: New owner %s is not in the expected users list", newOwner)
+		t.Logf("Expected users: %v", users)
+	}
+
+	t.Logf("New owner assigned: %s", newOwner)
+
+	// Verify the new owner is still in the room
+	snapshot, err = client.GetRoomSnapshot(ctx, roomID)
+	if err != nil {
+		t.Fatalf("GetRoomSnapshot after owner leave failed: %v", err)
+	}
+
+	// Find the new owner in the users list
+	ownerInRoom := false
+	for _, user := range snapshot.Users {
+		if user.Id == newOwner {
+			ownerInRoom = true
+			break
+		}
+	}
+
+	if !ownerInRoom {
+		t.Errorf("New owner %s is not in the room", newOwner)
+	}
+}

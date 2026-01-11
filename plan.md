@@ -1,5 +1,5 @@
 1. rooms exist offline for TTL
-2. If you kick owner, random becomes the owner
+2. ?If you kick owner, random becomes the owner
 3. USER_ONLY_1_ROOM=bool
 4. Room created at
 5. Pagination

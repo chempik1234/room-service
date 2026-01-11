@@ -275,8 +275,13 @@ func (s *MongoDBRepository) SetOwnerUserID(ctx context.Context, params ports.Set
 		return false, fmt.Errorf("mongo findOne room snapshot error: %w", err)
 	}
 
+	oldOwnerID := mongoRoom.OwnerUserID
+
 	// early exit
-	if mongoRoom.OwnerUserID == params.NewOwnerID.String() {
+	if oldOwnerID == params.NewOwnerID.String() {
+		logger.GetLoggerFromCtx(ctx).Warn(ctx, "someone tried to set owner id that is already there",
+			zap.Stringer("new_owner_id", params.NewOwnerID),
+			zap.String("old_owner_id", oldOwnerID))
 		return false, nil
 	}
 
@@ -304,7 +309,7 @@ func (s *MongoDBRepository) SetOwnerUserID(ctx context.Context, params ports.Set
 		return false, fmt.Errorf("internal error: room was queried for validation, but not found when updating")
 	}
 
-	return mongoRoom.OwnerUserID != params.NewOwnerID.String(), nil
+	return oldOwnerID != params.NewOwnerID.String(), nil
 }
 
 // RoomSnapshot - return a whole sight on room - ownerID, room data KV, roomID... (MongoDB)

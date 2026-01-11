@@ -390,3 +390,96 @@ func TestRoomOptions(t *testing.T) {
 		})
 	}
 }
+
+// TestRoomsList tests listing all rooms
+func TestRoomsList(t *testing.T) {
+	client, err := NewTestClient(serviceAddr)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+
+	// Create three rooms with different options
+	room1, err := client.CreateRoom(ctx, map[string]string{"name": "Lobby", "max_users": "10"})
+	if err != nil {
+		t.Fatalf("CreateRoom failed for room1: %v", err)
+	}
+
+	room2, err := client.CreateRoom(ctx, map[string]string{"name": "Game Room 1", "game_type": "chess"})
+	if err != nil {
+		t.Fatalf("CreateRoom failed for room2: %v", err)
+	}
+
+	room3, err := client.CreateRoom(ctx, map[string]string{"name": "Game Room 2", "private": "true"})
+	if err != nil {
+		t.Fatalf("CreateRoom failed for room3: %v", err)
+	}
+
+	// List all rooms
+	roomsList, err := client.RoomsList(ctx)
+	if err != nil {
+		t.Fatalf("RoomsList failed: %v", err)
+	}
+
+	if roomsList == nil {
+		t.Fatal("Expected non-nil RoomsList response")
+	}
+
+	// We expect at least 3 rooms (there might be more from previous tests)
+	if len(roomsList.Rooms) < 3 {
+		t.Errorf("Expected at least 3 rooms, got %d", len(roomsList.Rooms))
+	}
+
+	// Verify our created rooms are in the list
+	foundRoom1, foundRoom2, foundRoom3 := false, false, false
+	for _, room := range roomsList.Rooms {
+		if room.RoomId == room1 {
+			foundRoom1 = true
+			if room.RoomOptions["name"] != "Lobby" {
+				t.Errorf("Expected room1 name=Lobby, got %s", room.RoomOptions["name"])
+			}
+			if room.RoomOptions["max_users"] != "10" {
+				t.Errorf("Expected room1 max_users=10, got %s", room.RoomOptions["max_users"])
+			}
+		}
+		if room.RoomId == room2 {
+			foundRoom2 = true
+			if room.RoomOptions["name"] != "Game Room 1" {
+				t.Errorf("Expected room2 name=Game Room 1, got %s", room.RoomOptions["name"])
+			}
+			if room.RoomOptions["game_type"] != "chess" {
+				t.Errorf("Expected room2 game_type=chess, got %s", room.RoomOptions["game_type"])
+			}
+		}
+		if room.RoomId == room3 {
+			foundRoom3 = true
+			if room.RoomOptions["name"] != "Game Room 2" {
+				t.Errorf("Expected room3 name=Game Room 2, got %s", room.RoomOptions["name"])
+			}
+			if room.RoomOptions["private"] != "true" {
+				t.Errorf("Expected room3 private=true, got %s", room.RoomOptions["private"])
+			}
+		}
+	}
+
+	if !foundRoom1 {
+		t.Error("Room1 not found in RoomsList response")
+	}
+	if !foundRoom2 {
+		t.Error("Room2 not found in RoomsList response")
+	}
+	if !foundRoom3 {
+		t.Error("Room3 not found in RoomsList response")
+	}
+
+	// Verify that rooms have owner IDs set
+	for _, room := range roomsList.Rooms {
+		if room.RoomOwnerId == "" {
+			t.Errorf("Room %s should have a non-empty owner ID", room.RoomId)
+		}
+	}
+
+	t.Logf("Successfully listed %d rooms", len(roomsList.Rooms))
+}

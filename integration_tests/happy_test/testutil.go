@@ -379,3 +379,8 @@ func (sc *StreamClient) SetOwnerStream(roomID, newOwnerID string) error {
 
 	return sc.Send(cmd)
 }
+
+// RoomsList returns a list of all rooms with no inner data and no users list
+func (tc *TestClient) RoomsList(ctx context.Context) (*room_service.RoomsShortList, error) {
+	return tc.client.RoomsList(ctx, &room_service.EmptyMessage{})
+}

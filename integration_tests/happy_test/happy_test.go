@@ -178,6 +178,68 @@ func TestSetData(t *testing.T) {
 	}
 }
 
+// TestSetOwner tests setting the owner of a room
+func TestSetOwner(t *testing.T) {
+	client, err := NewTestClient(serviceAddr)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+
+	// Create a room
+	roomID, err := client.CreateRoom(ctx, nil)
+	if err != nil {
+		t.Fatalf("CreateRoom failed: %v", err)
+	}
+	t.Logf("Created room: %s", roomID)
+
+	// Set owner to a new user
+	ownerChanged, err := client.SetOwner(ctx, roomID, "new-owner-user")
+	if err != nil {
+		t.Fatalf("SetOwner failed: %v", err)
+	}
+
+	if ownerChanged == nil {
+		t.Fatal("Expected OwnerChanged response, got nil")
+	}
+
+	if ownerChanged.NewOwnerId != "new-owner-user" {
+		t.Errorf("Expected new owner ID 'new-owner-user', got '%s'", ownerChanged.NewOwnerId)
+	}
+
+	if !ownerChanged.OwnerHasChanged {
+		t.Error("Expected OwnerHasChanged to be true")
+	}
+
+	t.Logf("Owner changed to: %s (changed: %v)", ownerChanged.NewOwnerId, ownerChanged.OwnerHasChanged)
+
+	// Set owner again to the same user - should indicate no change
+	ownerChanged2, err := client.SetOwner(ctx, roomID, "new-owner-user")
+	if err != nil {
+		t.Fatalf("SetOwner (second call) failed: %v", err)
+	}
+
+	if ownerChanged2.OwnerHasChanged {
+		t.Error("Expected OwnerHasChanged to be false when setting to same owner")
+	}
+
+	// Set owner to a different user
+	ownerChanged3, err := client.SetOwner(ctx, roomID, "another-owner")
+	if err != nil {
+		t.Fatalf("SetOwner (third call) failed: %v", err)
+	}
+
+	if ownerChanged3.NewOwnerId != "another-owner" {
+		t.Errorf("Expected new owner ID 'another-owner', got '%s'", ownerChanged3.NewOwnerId)
+	}
+
+	if !ownerChanged3.OwnerHasChanged {
+		t.Error("Expected OwnerHasChanged to be true when changing to different owner")
+	}
+}
+
 // TestDeleteRoom tests creating and deleting a room
 func TestDeleteRoom(t *testing.T) {
 	client, err := NewTestClient(serviceAddr)

@@ -125,6 +125,27 @@ func (tc *TestClient) DeleteRoom(ctx context.Context, roomID string) error {
 	return err
 }
 
+// SetOwner sets the owner of a room
+func (tc *TestClient) SetOwner(ctx context.Context, roomID, newOwnerID string) (*room_service.OwnerChangedEventBody, error) {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    "test-user",
+		RoomId:    &roomID,
+		Payload: &room_service.Command_SetOwner{
+			SetOwner: &room_service.SetOwnerUserID{
+				NewOwnerId: newOwnerID,
+			},
+		},
+	}
+
+	resp, err := tc.client.SingleCommand(ctx, cmd)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.GetOwnerChanged(), nil
+}
+
 // SetData sets a data value in a room
 func (tc *TestClient) SetData(ctx context.Context, roomID, dataID string, value *room_service.Value) error {
 	cmd := &room_service.Command{
@@ -336,6 +357,22 @@ func (sc *StreamClient) DeleteRoomStream(roomID string) error {
 		Payload: &room_service.Command_DeleteRoom{
 			DeleteRoom: &room_service.DeleteRoomCommandBody{
 				DeleteApprove: true,
+			},
+		},
+	}
+
+	return sc.Send(cmd)
+}
+
+// SetOwnerStream sets the owner of a room via stream
+func (sc *StreamClient) SetOwnerStream(roomID, newOwnerID string) error {
+	cmd := &room_service.Command{
+		Timestamp: time.Now().UnixMicro(),
+		UserId:    "test-user",
+		RoomId:    &roomID,
+		Payload: &room_service.Command_SetOwner{
+			SetOwner: &room_service.SetOwnerUserID{
+				NewOwnerId: newOwnerID,
 			},
 		},
 	}

@@ -251,6 +251,90 @@ func TestStreamSetDataStream(t *testing.T) {
 	}
 }
 
+// TestStreamSetOwner tests setting the owner of a room via stream
+func TestStreamSetOwner(t *testing.T) {
+	client, err := NewTestClient(serviceAddr)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+	defer client.Close()
+
+	ctx := context.Background()
+
+	stream, err := client.OpenStream(ctx)
+	if err != nil {
+		t.Fatalf("Failed to open stream: %v", err)
+	}
+
+	// Create a room
+	roomID, err := stream.CreateRoomStream(ctx, nil)
+	if err != nil {
+		t.Fatalf("CreateRoomStream failed: %v", err)
+	}
+	_, _ = stream.Recv() // Receive room created event
+
+	t.Logf("Created room: %s", roomID)
+
+	// Set owner to a new user
+	if err := stream.SetOwnerStream(roomID, "owner-user-1"); err != nil {
+		t.Fatalf("SetOwnerStream failed: %v", err)
+	}
+
+	// Receive the owner changed event
+	event, err := stream.Recv()
+	if err != nil {
+		t.Fatalf("Failed to receive owner changed event: %v", err)
+	}
+
+	ownerChanged := event.GetOwnerChanged()
+	if ownerChanged == nil {
+		t.Fatal("Expected OwnerChanged event, got nil")
+	}
+	if ownerChanged.NewOwnerId != "owner-user-1" {
+		t.Errorf("Expected new owner ID 'owner-user-1', got '%s'", ownerChanged.NewOwnerId)
+	}
+	if !ownerChanged.OwnerHasChanged {
+		t.Error("Expected OwnerHasChanged to be true")
+	}
+
+	t.Logf("Owner changed to: %s (changed: %v)", ownerChanged.NewOwnerId, ownerChanged.OwnerHasChanged)
+
+	// Set owner to the same user - should indicate no change
+	if err := stream.SetOwnerStream(roomID, "owner-user-1"); err != nil {
+		t.Fatalf("SetOwnerStream (second call) failed: %v", err)
+	}
+
+	event, err = stream.Recv()
+	if err != nil {
+		t.Fatalf("Failed to receive second owner changed event: %v", err)
+	}
+
+	ownerChanged = event.GetOwnerChanged()
+	if ownerChanged.OwnerHasChanged {
+		t.Error("Expected OwnerHasChanged to be false when setting to same owner")
+	}
+
+	// Set owner to a different user
+	if err := stream.SetOwnerStream(roomID, "owner-user-2"); err != nil {
+		t.Fatalf("SetOwnerStream (third call) failed: %v", err)
+	}
+
+	event, err = stream.Recv()
+	if err != nil {
+		t.Fatalf("Failed to receive third owner changed event: %v", err)
+	}
+
+	ownerChanged = event.GetOwnerChanged()
+	if ownerChanged.NewOwnerId != "owner-user-2" {
+		t.Errorf("Expected new owner ID 'owner-user-2', got '%s'", ownerChanged.NewOwnerId)
+	}
+	if !ownerChanged.OwnerHasChanged {
+		t.Error("Expected OwnerHasChanged to be true when changing to different owner")
+	}
+
+	t.Logf("Owner changed to: %s (changed: %v)", ownerChanged.NewOwnerId, ownerChanged.OwnerHasChanged)
+}
+
 // TestStreamMultipleOperations tests multiple operations in a single stream
 func TestStreamMultipleOperations(t *testing.T) {
 	client, err := NewTestClient(serviceAddr)

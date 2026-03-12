@@ -31,7 +31,9 @@ type RoomsPort interface {
 	// errors.ErrUserNotInRoom if userID isn't in room
 	SetOwnerUserID(ctx context.Context, params SetOwnerUserIDParams) (bool, error)
 	// RoomsList - return list of all rooms with no inner data and no users list
-	RoomsList(ctx context.Context) ([]*models.Room, error)
+	//
+	// If withUserID is specified, only rooms this user is in are shown
+	RoomsList(ctx context.Context, withUserID types.AnyText) ([]*models.Room, error)
 }
 
 // DeleteRoomParams - param set for RoomsPort.DeleteRoom method

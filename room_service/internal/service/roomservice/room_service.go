@@ -6,6 +6,7 @@ import (
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
+	"github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 	"github.com/wb-go/wbf/retry"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -111,7 +112,27 @@ func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r
 
 // RoomsList - get rooms list with no inner data and no users list
 func (s *RoomService) RoomsList(ctx context.Context, _ *r.EmptyMessage) (*r.RoomsShortList, error) {
-	roomsList, err := s.roomsRepo.RoomsList(ctx)
+	roomsList, err := s.roomsRepo.RoomsList(ctx, "")
+	if err != nil {
+		logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to list rooms", zap.Error(err))
+		return nil, fmt.Errorf("failed to list rooms: %w", err)
+	}
+
+	protoRoomsList := make([]*r.RoomShort, len(roomsList))
+	for i, room := range roomsList {
+		protoRoomsList[i] = &r.RoomShort{
+			RoomOptions: room.Options,
+			RoomId:      room.ID.String(),
+			RoomOwnerId: room.OwnerUserID.String(),
+		}
+	}
+
+	return &r.RoomsShortList{Rooms: protoRoomsList}, err
+}
+
+// UserActiveRoomsList - get list of rooms that user is currently in (with no inner data and no users list)
+func (s *RoomService) UserActiveRoomsList(ctx context.Context, userIDMessage *r.UserIDMessage) (*r.RoomsShortList, error) {
+	roomsList, err := s.roomsRepo.RoomsList(ctx, types.NewAnyText(userIDMessage.GetUserId()))
 	if err != nil {
 		logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to list rooms", zap.Error(err))
 		return nil, fmt.Errorf("failed to list rooms: %w", err)

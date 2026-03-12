@@ -19,9 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RoomService_Stream_FullMethodName        = "/api.RoomService/Stream"
-	RoomService_SingleCommand_FullMethodName = "/api.RoomService/SingleCommand"
-	RoomService_RoomsList_FullMethodName     = "/api.RoomService/RoomsList"
+	RoomService_Stream_FullMethodName              = "/api.RoomService/Stream"
+	RoomService_SingleCommand_FullMethodName       = "/api.RoomService/SingleCommand"
+	RoomService_RoomsList_FullMethodName           = "/api.RoomService/RoomsList"
+	RoomService_UserActiveRoomsList_FullMethodName = "/api.RoomService/UserActiveRoomsList"
 )
 
 // RoomServiceClient is the client API for RoomService service.
@@ -34,6 +35,7 @@ type RoomServiceClient interface {
 	SingleCommand(ctx context.Context, in *Command, opts ...grpc.CallOption) (*Event, error)
 	// return rooms with users and options, no inner data
 	RoomsList(ctx context.Context, in *EmptyMessage, opts ...grpc.CallOption) (*RoomsShortList, error)
+	UserActiveRoomsList(ctx context.Context, in *UserIDMessage, opts ...grpc.CallOption) (*RoomsShortList, error)
 }
 
 type roomServiceClient struct {
@@ -77,6 +79,16 @@ func (c *roomServiceClient) RoomsList(ctx context.Context, in *EmptyMessage, opt
 	return out, nil
 }
 
+func (c *roomServiceClient) UserActiveRoomsList(ctx context.Context, in *UserIDMessage, opts ...grpc.CallOption) (*RoomsShortList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RoomsShortList)
+	err := c.cc.Invoke(ctx, RoomService_UserActiveRoomsList_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RoomServiceServer is the server API for RoomService service.
 // All implementations must embed UnimplementedRoomServiceServer
 // for forward compatibility.
@@ -87,6 +99,7 @@ type RoomServiceServer interface {
 	SingleCommand(context.Context, *Command) (*Event, error)
 	// return rooms with users and options, no inner data
 	RoomsList(context.Context, *EmptyMessage) (*RoomsShortList, error)
+	UserActiveRoomsList(context.Context, *UserIDMessage) (*RoomsShortList, error)
 	mustEmbedUnimplementedRoomServiceServer()
 }
 
@@ -105,6 +118,9 @@ func (UnimplementedRoomServiceServer) SingleCommand(context.Context, *Command) (
 }
 func (UnimplementedRoomServiceServer) RoomsList(context.Context, *EmptyMessage) (*RoomsShortList, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RoomsList not implemented")
+}
+func (UnimplementedRoomServiceServer) UserActiveRoomsList(context.Context, *UserIDMessage) (*RoomsShortList, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UserActiveRoomsList not implemented")
 }
 func (UnimplementedRoomServiceServer) mustEmbedUnimplementedRoomServiceServer() {}
 func (UnimplementedRoomServiceServer) testEmbeddedByValue()                     {}
@@ -170,6 +186,24 @@ func _RoomService_RoomsList_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RoomService_UserActiveRoomsList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UserIDMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RoomServiceServer).UserActiveRoomsList(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RoomService_UserActiveRoomsList_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RoomServiceServer).UserActiveRoomsList(ctx, req.(*UserIDMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RoomService_ServiceDesc is the grpc.ServiceDesc for RoomService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -184,6 +218,10 @@ var RoomService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RoomsList",
 			Handler:    _RoomService_RoomsList_Handler,
+		},
+		{
+			MethodName: "UserActiveRoomsList",
+			Handler:    _RoomService_UserActiveRoomsList_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

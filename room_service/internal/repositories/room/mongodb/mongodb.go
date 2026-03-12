@@ -443,10 +443,18 @@ func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectD
 }
 
 // RoomsList - return list of all rooms with no inner data and no users list
-func (s *MongoDBRepository) RoomsList(ctx context.Context) ([]*models.Room, error) {
+//
+// If withUserID is specified, only rooms this user is in are shown
+func (s *MongoDBRepository) RoomsList(ctx context.Context, withUserID types2.AnyText) ([]*models.Room, error) {
 	// step 1. query rooms
 	projection := bson.M{roomDataField: 0}
-	cursor, err := s.roomsCollection.Find(ctx, bson.M{}, options.Find().SetProjection(projection))
+	filter := bson.M{}
+
+	if len(withUserID) > 0 {
+		filter = bson.M{"users": bson.M{"$elemMatch": bson.M{"id": withUserID.String()}}}
+	}
+
+	cursor, err := s.roomsCollection.Find(ctx, filter, options.Find().SetProjection(projection))
 	if err != nil {
 		return nil, fmt.Errorf("failed to Find() rooms list: %w", err)
 	}

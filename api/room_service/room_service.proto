@@ -180,6 +180,12 @@ message FullRoomSnapshotEventBody {
 
 // --------------------- single command result is the same as Event
 
+// --------------------- query input
+
+message UserIDMessage {
+  string user_id = 1;
+}
+
 // --------------------- query results
 
 message RoomsShortList {
@@ -198,6 +204,7 @@ service RoomService {
 
   // return rooms with users and options, no inner data
   rpc RoomsList(EmptyMessage) returns (RoomsShortList);
+  rpc UserActiveRoomsList(UserIDMessage) returns (RoomsShortList);
 
   // maybe some other operations
 }

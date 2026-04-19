@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	errors2 "github.com/chempik1234/room-service/internal/errors"
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
@@ -112,6 +113,7 @@ func (s *MongoDBRepository) CreateRoom(ctx context.Context, room *models.Room) (
 		roomIDField:          room.ID.String(),
 		roomOwnerUserIDField: room.OwnerUserID.String(),
 		roomOptionsField:     room.Options,
+		roomDataField:        bson.M{}, // Initialize empty data field
 	})
 
 	if err != nil {
@@ -405,12 +407,9 @@ func (s *MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomS
 // Data not found -> errors.ErrDataPieceDoesntExist
 func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) (*models.Value, error) {
 	// First, check if room exists
-	roomExists, err := s.roomExists(ctx, params.RoomID.String())
+	err := s.errIfRoomDoesntExist(ctx, params.RoomID.String())
 	if err != nil {
 		return nil, err // already wrapped
-	}
-	if !roomExists {
-		return nil, errors2.ErrQuick(errors2.ErrRoomDoesntExist, params.RoomID.String())
 	}
 
 	dataID := params.DataID.String()

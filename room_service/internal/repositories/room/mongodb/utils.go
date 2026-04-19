@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	errors2 "github.com/chempik1234/room-service/internal/errors"
 	"github.com/chempik1234/room-service/internal/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -13,7 +14,7 @@ import (
 
 func (s *MongoDBRepository) roomExists(ctx context.Context, id string) (bool, error) {
 	var res bson.M
-	err := s.roomsCollection.FindOne(ctx, bson.M{"id": id}).Decode(&res)
+	err := s.roomsCollection.FindOne(ctx, bson.M{roomIDField: id}).Decode(&res)
 	if errors.Is(err, mongo.ErrNoDocuments) {
 		return false, nil
 	}
@@ -60,7 +61,7 @@ func (s *MongoDBRepository) errIfRoomDoesntExist(ctx context.Context, id string)
 // errors are wrapped already
 func (s *MongoDBRepository) valueInRoom(ctx context.Context, roomID string, dataID string) (*models.Value, error) {
 	valuePathInDB := "data." + dataID
-	raw, err := s.roomsCollection.FindOne(ctx, bson.M{"id": roomID}, options.FindOne().SetProjection(bson.M{valuePathInDB: 1})).Raw()
+	raw, err := s.roomsCollection.FindOne(ctx, bson.M{roomIDField: roomID}, options.FindOne().SetProjection(bson.M{valuePathInDB: 1})).Raw()
 	if err != nil {
 		return nil, fmt.Errorf("error while querying room value (data.%s): %w", dataID, err)
 	}

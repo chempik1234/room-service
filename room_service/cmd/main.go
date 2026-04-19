@@ -85,6 +85,14 @@ func main() {
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to w: 1")
 		writeConcern = writeconcern.W1()
 		break
+	case "majority":
+		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to majority")
+		writeConcern = writeconcern.Majority()
+		break
+	case "":
+		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to default (empty)")
+		// Use default, writeConcern stays nil
+		break
 	default:
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "w concern is custom", zap.String("write_concern", cfg.MongoDBRoomsRepo.WriteConcern))
 		writeConcern = writeconcern.Custom(cfg.MongoDBRoomsRepo.WriteConcern)

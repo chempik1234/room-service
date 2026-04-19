@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+
 	errors2 "github.com/chempik1234/room-service/internal/errors"
 	"github.com/chempik1234/room-service/internal/models"
 	types2 "github.com/chempik1234/super-danis-library-golang/v2/pkg/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"strconv"
 )
 
 // setData - set data[data_id] = value in MongoDB
@@ -22,7 +23,15 @@ func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, 
 		return nil, fmt.Errorf("failed to encode value to BSON: %w", err)
 	}
 
-	filter := bson.M{"id": roomID}
+	filter := bson.M{roomIDField: roomID}
+
+	// DEBUG: Verify room exists before update
+	var roomDoc bson.M
+	err = s.roomsCollection.FindOne(ctx, filter, options.FindOne().SetProjection(bson.M{roomIDField: 1})).Decode(&roomDoc)
+	if err != nil {
+		return nil, fmt.Errorf("room not found before update: %s (filter: %v)", err, filter)
+	}
+	fmt.Printf("🐛 Room exists check: found room %s in collection %s\n", roomID, s.roomsCollection.Name())
 
 	var update bson.M
 	if len(itemIndex) == 0 {
@@ -36,8 +45,19 @@ func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, 
 	if err != nil {
 		return nil, fmt.Errorf("mongo updateOne set data error: %w", err)
 	}
+
+	// Verify the update actually happened by reading it back
+	var verificationDoc bson.M
+	err = s.roomsCollection.FindOne(ctx, filter).Decode(&verificationDoc)
+	if err == nil {
+		fmt.Printf("🐛 Verification: room exists after update, data field: %v\n", verificationDoc[roomDataField])
+	}
+
 	if result.MatchedCount == 0 {
-		return nil, errors2.ErrQuick(errors2.ErrRoomDoesntExist, roomID)
+		return nil, errors2.ErrQuick(errors2.ErrNoDataUpdated, map[string]bson.M{
+			"filter": filter,
+			"update": update,
+		})
 	}
 
 	var resultValue *models.Value
@@ -195,10 +215,10 @@ func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID strin
 			res, err := s.roomsCollection.UpdateOne(ctx, filter,
 				bson.M{"$unset": bson.M{fmt.Sprintf("%s.%s.%s", roomDataField, dataID, itemIndex): ""}})
 			if err != nil {
-				return nil, fmt.Errorf("mongo updateOne $unset data error (dataId: '%s', array_index: '%d'): %w", dataID, itemIndex.String(), err)
+				return nil, fmt.Errorf("mongo updateOne $unset data error (dataId: '%s', dict_key: '%s'): %w", dataID, itemIndex.String(), err)
 			}
 			if res.ModifiedCount == 0 {
-				return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, fmt.Errorf("%s (dict_key='%d')", dataID, itemIndex.String()))
+				return nil, errors2.ErrQuick(errors2.ErrDataPieceDoesntExist, fmt.Errorf("%s (dict_key='%s')", dataID, itemIndex.String()))
 			}
 		default:
 			return nil, errors2.ErrQuick(errors.ErrUnsupported, fmt.Sprintf("remove for type %T", valueType))

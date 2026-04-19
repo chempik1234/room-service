@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	"github.com/chempik1234/room-service/internal/projectutils"
@@ -187,8 +188,10 @@ func (s *RoomService) processCommand(ctx context.Context, in *r.Command) (*r.Eve
 		}
 	}
 
-	if returnEvent.Payload == nil || err != nil {
+	if err != nil {
 		returnEvent = quickErrorEvent(returnEvent.RoomId, returnEvent.UserId, err.Error())
+	} else if returnEvent.Payload == nil {
+		returnEvent = quickErrorEvent(returnEvent.RoomId, returnEvent.UserId, "nil payload returned")
 	}
 
 	return returnEvent, err

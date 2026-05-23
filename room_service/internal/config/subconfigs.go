@@ -10,8 +10,8 @@ type RoomServiceConfig struct {
 	RetryStrategy config.RetryStrategyConfig `yaml:"retry" env-prefix:"RETRY_"`
 	// UseAuth - enable API key authentication
 	UseAuth bool `env:"USE_AUTH" env-default:"true"`
-	// ApiKey - API key for authentication (only used if UseAuth is true)
-	ApiKey string `env:"API_KEY" env-default:"apikey"`
+	// APIKey - API key for authentication (only used if UseAuth is true)
+	APIKey string `env:"API_KEY" env-default:"apikey"`
 }
 
 // LogConfig - config struct for logging

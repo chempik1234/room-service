@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-func (s *MongoDBRepository) roomExists(ctx context.Context, id string) (bool, error) {
+func (s *RoomsMongoDBRepository) roomExists(ctx context.Context, id string) (bool, error) {
 	var res bson.M
 	err := s.roomsCollection.FindOne(ctx, bson.M{roomIDField: id}).Decode(&res)
 	if errors.Is(err, mongo.ErrNoDocuments) {
@@ -27,7 +27,7 @@ func (s *MongoDBRepository) roomExists(ctx context.Context, id string) (bool, er
 // errIfRoomExists - return err if room ID already exists or DB error, else nil
 //
 // Returned error is already wrapped
-func (s *MongoDBRepository) errIfRoomExists(ctx context.Context, id string) error {
+func (s *RoomsMongoDBRepository) errIfRoomExists(ctx context.Context, id string) error {
 	idExists, err := s.roomExists(ctx, id)
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func (s *MongoDBRepository) errIfRoomExists(ctx context.Context, id string) erro
 // errIfRoomDoesntExist - return err if room ID doesn't exist or DB error, else nil
 //
 // Returned error is already wrapped
-func (s *MongoDBRepository) errIfRoomDoesntExist(ctx context.Context, id string) error {
+func (s *RoomsMongoDBRepository) errIfRoomDoesntExist(ctx context.Context, id string) error {
 	idExists, err := s.roomExists(ctx, id)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (s *MongoDBRepository) errIfRoomDoesntExist(ctx context.Context, id string)
 // valueInRoom - return whole value by data_id
 //
 // errors are wrapped already
-func (s *MongoDBRepository) valueInRoom(ctx context.Context, roomID string, dataID string) (*models.Value, error) {
+func (s *RoomsMongoDBRepository) valueInRoom(ctx context.Context, roomID string, dataID string) (*models.Value, error) {
 	valuePathInDB := "data." + dataID
 	raw, err := s.roomsCollection.FindOne(ctx, bson.M{roomIDField: roomID}, options.FindOne().SetProjection(bson.M{valuePathInDB: 1})).Raw()
 	if err != nil {

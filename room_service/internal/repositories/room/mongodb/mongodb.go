@@ -65,14 +65,14 @@ const (
 	roomDataField        = "data"
 )
 
-// MongoDBRepository - ports.RoomsPort impl with MongoDB
-type MongoDBRepository struct {
+// RoomsMongoDBRepository - ports.RoomsPort impl with MongoDB
+type RoomsMongoDBRepository struct {
 	client          *mongo.Client
 	db              *mongo.Database
 	roomsCollection *mongo.Collection
 }
 
-// MongoRepoParams - params for initializing MongoDBRepository
+// MongoRepoParams - params for initializing RoomsMongoDBRepository
 type MongoRepoParams struct {
 	Database       string
 	RoomCollection string
@@ -80,11 +80,11 @@ type MongoRepoParams struct {
 	ReadConcern    *readconcern.ReadConcern
 }
 
-// NewMongoDBRepository - return new MongoDBRepository
+// NewRoomsMongoDBRepository - return new RoomsMongoDBRepository
 //
 // roomCollectionName default = "rooms"
-func NewMongoDBRepository(client *mongo.Client, params MongoRepoParams) *MongoDBRepository {
-	s := &MongoDBRepository{client: client}
+func NewRoomsMongoDBRepository(client *mongo.Client, params MongoRepoParams) *RoomsMongoDBRepository {
+	s := &RoomsMongoDBRepository{client: client}
 	s.db = client.Database(
 		params.Database,
 		options.Database().SetReadConcern(params.ReadConcern),
@@ -99,7 +99,7 @@ func NewMongoDBRepository(client *mongo.Client, params MongoRepoParams) *MongoDB
 // CreateRoom - create room in MongoDB
 //
 // Create ID yourself
-func (s *MongoDBRepository) CreateRoom(ctx context.Context, room *models.Room) (newRoom *models.Room, err error) {
+func (s *RoomsMongoDBRepository) CreateRoom(ctx context.Context, room *models.Room) (newRoom *models.Room, err error) {
 	if room == nil {
 		return nil, fmt.Errorf("internal error: CreateRoom - room is %v", room)
 	}
@@ -126,7 +126,7 @@ func (s *MongoDBRepository) CreateRoom(ctx context.Context, room *models.Room) (
 // DeleteRoom - delete room from MongoDB with all data inside
 //
 // Not found -> errors.ErrRoomDoesntExist
-func (s *MongoDBRepository) DeleteRoom(ctx context.Context, params ports.DeleteRoomParams) (err error) {
+func (s *RoomsMongoDBRepository) DeleteRoom(ctx context.Context, params ports.DeleteRoomParams) (err error) {
 	// uses retry inside mongodb driver
 	res, err := s.roomsCollection.DeleteOne(ctx, bson.M{roomIDField: params.RoomID.String()})
 	if err != nil {
@@ -145,7 +145,7 @@ func (s *MongoDBRepository) DeleteRoom(ctx context.Context, params ports.DeleteR
 //
 // Not found -> errors.ErrRoomDoesntExist
 // Idempotent - if user already in room, no error (just no-op)
-func (s *MongoDBRepository) JoinRoom(ctx context.Context, params ports.JoinRoomParams) (err error) {
+func (s *RoomsMongoDBRepository) JoinRoom(ctx context.Context, params ports.JoinRoomParams) (err error) {
 	err = s.errIfRoomDoesntExist(ctx, params.RoomID.String())
 	if err != nil {
 		return err // already wrapped
@@ -180,7 +180,7 @@ func (s *MongoDBRepository) JoinRoom(ctx context.Context, params ports.JoinRoomP
 // IsRoomOwner - check if room's owner is given user (MongoDB)
 //
 // Not found -> errors.ErrRoomDoesntExist
-func (s *MongoDBRepository) IsRoomOwner(ctx context.Context, params ports.IsRoomOwnerParams) (bool, error) {
+func (s *RoomsMongoDBRepository) IsRoomOwner(ctx context.Context, params ports.IsRoomOwnerParams) (bool, error) {
 	// Find room and project only the owner_user_id field
 	filter := bson.M{roomIDField: params.RoomID.String()}
 	projection := bson.M{roomOwnerUserIDField: 1}
@@ -206,7 +206,7 @@ func (s *MongoDBRepository) IsRoomOwner(ctx context.Context, params ports.IsRoom
 //
 // Room not found -> errors.ErrRoomDoesntExist
 // User not found -> errors.ErrUserNotInRoom
-func (s *MongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoomParams) error {
+func (s *RoomsMongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoomParams) error {
 	// check if room exists
 	roomExists, err := s.roomExists(ctx, param.RoomID.String())
 	if err != nil {
@@ -258,7 +258,7 @@ func (s *MongoDBRepository) LeaveRoom(ctx context.Context, param ports.LeaveRoom
 // SetOwnerUserID - try to set new owner ID (MongoDB)
 //
 // errors.ErrUserNotInRoom if userID isn't in room
-func (s *MongoDBRepository) SetOwnerUserID(ctx context.Context, params ports.SetOwnerUserIDParams) (bool, error) {
+func (s *RoomsMongoDBRepository) SetOwnerUserID(ctx context.Context, params ports.SetOwnerUserIDParams) (bool, error) {
 	// we need these fields
 	var mongoRoom struct {
 		OwnerUserID string `bson:"owner_user_id"`
@@ -317,7 +317,7 @@ func (s *MongoDBRepository) SetOwnerUserID(ctx context.Context, params ports.Set
 // RoomSnapshot - return a whole sight on room - ownerID, room data KV, roomID... (MongoDB)
 //
 // Room not found -> errors.ErrRoomDoesntExist
-func (s *MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomSnapshotParams) (*models.RoomSnapshot, error) {
+func (s *RoomsMongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomSnapshotParams) (*models.RoomSnapshot, error) {
 	// in snapshot, we need all fields
 	var mongoRoom struct {
 		ID          string            `bson:"id"`
@@ -405,7 +405,7 @@ func (s *MongoDBRepository) RoomSnapshot(ctx context.Context, params ports.RoomS
 //
 // Room not found -> errors.ErrRoomDoesntExist
 // Data not found -> errors.ErrDataPieceDoesntExist
-func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) (*models.Value, error) {
+func (s *RoomsMongoDBRepository) AffectData(ctx context.Context, params ports.AffectDataParams) (*models.Value, error) {
 	// First, check if room exists
 	err := s.errIfRoomDoesntExist(ctx, params.RoomID.String())
 	if err != nil {
@@ -444,7 +444,7 @@ func (s *MongoDBRepository) AffectData(ctx context.Context, params ports.AffectD
 // RoomsList - return list of all rooms with no inner data and no users list
 //
 // If withUserID is specified, only rooms this user is in are shown
-func (s *MongoDBRepository) RoomsList(ctx context.Context, withUserID types2.AnyText) ([]*models.Room, error) {
+func (s *RoomsMongoDBRepository) RoomsList(ctx context.Context, withUserID types2.AnyText) ([]*models.Room, error) {
 	// step 1. query rooms
 	projection := bson.M{roomDataField: 0}
 	filter := bson.M{}
@@ -478,11 +478,11 @@ func (s *MongoDBRepository) RoomsList(ctx context.Context, withUserID types2.Any
 		// roomID
 		rawValue, err = cursor.Current.LookupErr(roomIDField)
 		if err != nil {
-			return nil, fmt.Errorf("invalid room '%s' - no room \"%s\": %w", roomIDField, err)
+			return nil, fmt.Errorf("invalid room '%s' - no room \"%s\": %w", roomIDField, roomIDField, err)
 		}
 		roomID, err = types2.NewUUID(rawValue.StringValue())
 		if err != nil {
-			return nil, fmt.Errorf("invalid room '%s' - \"%s\" isn't a UUID: %w", roomIDField, err)
+			return nil, fmt.Errorf("invalid room '%s' - \"%s\" isn't a UUID: %w", roomIDField, roomIDField, err)
 		}
 
 		// ownerUserID

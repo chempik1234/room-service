@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/chempik1234/room-service/internal/config"
 	"github.com/chempik1234/room-service/internal/repositories/commandcache"
+	"github.com/chempik1234/room-service/internal/repositories/eventbus"
 	mongodb2 "github.com/chempik1234/room-service/internal/repositories/room/mongodb"
 	"github.com/chempik1234/room-service/internal/service/roomservice"
 	"github.com/chempik1234/room-service/pkg/api/room_service"
@@ -80,41 +81,37 @@ func main() {
 	case "w: 0":
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to w: 0")
 		writeConcern = writeconcern.Unacknowledged()
-		break
 	case "w: 1":
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to w: 1")
 		writeConcern = writeconcern.W1()
-		break
 	case "majority":
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to majority")
 		writeConcern = writeconcern.Majority()
-		break
 	case "":
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "mongo write_concern is set to default (empty)")
 		// Use default, writeConcern stays nil
-		break
 	default:
 		logger.GetLoggerFromCtx(ctx).Info(ctx, "w concern is custom", zap.String("write_concern", cfg.MongoDBRoomsRepo.WriteConcern))
 		writeConcern = writeconcern.Custom(cfg.MongoDBRoomsRepo.WriteConcern)
-		break
 	}
 
 	// uses retry inside mongodb driver
 	roomServiceServer := roomservice.NewRoomService(
-		mongodb2.NewMongoDBRepository(mongoClient, mongodb2.MongoRepoParams{
+		mongodb2.NewRoomsMongoDBRepository(mongoClient, mongodb2.MongoRepoParams{
 			Database:       cfg.MongoDBRoomsRepo.Database,
 			RoomCollection: cfg.MongoDBRoomsRepo.RoomsCollection,
 			WriteConcern:   writeConcern,
 			ReadConcern:    readConcern,
 		}),
 		commandcache.NewRedisCommandCache(redisClient, cfg.Redis.TTLSeconds*1000),
+		eventbus.NewEventBusInMemory(),
 		gRPCRetryStrategy,
 	)
 	//endregion
 
 	// Build interceptor chain based on config
 	if cfg.Service.UseAuth {
-		interceptors.SetAPIKey(cfg.Service.ApiKey)
+		interceptors.SetAPIKey(cfg.Service.APIKey)
 	}
 	unaryInterceptors, streamInterceptors := interceptors.MiddlewaresForService(cfg.Service.UseAuth)
 

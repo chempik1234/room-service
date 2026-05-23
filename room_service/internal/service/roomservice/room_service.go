@@ -23,16 +23,23 @@ type RoomService struct {
 	// execute commands and store data
 	roomsRepo ports.RoomsPort
 	// no-repeat
-	commandIdShortCache ports.CommandIDShortCache
+	commandIDShortCache ports.CommandIDShortCache
 	retryStrategy       retry.Strategy
+
+	eventBus ports.EventBusRepository
 }
 
 // NewRoomService creates a new RoomService
-func NewRoomService(roomsRepo ports.RoomsPort, commandIdShortCache ports.CommandIDShortCache, retryStrategy retry.Strategy) *RoomService {
+func NewRoomService(
+	roomsRepo ports.RoomsPort, commandIDShortCache ports.CommandIDShortCache,
+	eventBus ports.EventBusRepository,
+	retryStrategy retry.Strategy,
+) *RoomService {
 	return &RoomService{
 		roomsRepo:           roomsRepo,
 		retryStrategy:       retryStrategy,
-		commandIdShortCache: commandIdShortCache,
+		commandIDShortCache: commandIDShortCache,
+		eventBus:            eventBus,
 	}
 }
 
@@ -40,48 +47,97 @@ func NewRoomService(roomsRepo ports.RoomsPort, commandIdShortCache ports.Command
 //
 // Incoming commands - output Events with deltas or full snapshots (e.g. on room join)
 func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]) error {
-	var err error
 	var received *r.Command
 
-	// main cycle
-	for {
-		// 1) receive object
+	resultErr := make(chan error)
 
-		// region try to receive
-		received, err = stream.Recv()
-		if err == io.EOF {
-			return nil
-		} else if err != nil {
-			return fmt.Errorf("error receiving gRPC stream in_: %w", err)
-		}
-		// endregion
-
-		// 2) ctx - commandScopeCtx stores command ID and logger
-		commandScopeCtx, err := newCommandScopeCtx(context.Background())
-		if err != nil {
-			return fmt.Errorf("failed to init logger: %w", err)
-		}
-
-		// 3) execute command async-ly
-		go func() {
-			// 3.1) try to execute
-			returnEvent, err := s.processCommand(commandScopeCtx, received)
-			if err != nil {
-				// if failed, send error
-				logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "error processing command in stream", zap.Error(err))
-				s.sendErrorToStream(commandScopeCtx, stream, returnEvent, err)
-				return
-			}
-
-			// 3.2) send result if OK
-			err = retry.Do(func() error { return stream.Send(returnEvent) }, s.retryStrategy)
-			if err != nil {
-				// if failed to send, then try to send error about step 2
-				logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "failed to send event", zap.Error(err))
-				s.sendErrorToStream(commandScopeCtx, stream, returnEvent, err)
-			}
-		}()
+	eventsToSendChan, subscription, err := s.eventBus.SubscribeToBusAllRooms()
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to existing events => won't care to accept new ones; error: %w", err)
 	}
+
+	// we don't quit, until reading is stopped
+	go func() {
+		// main cycle
+		for {
+			// 1) receive object
+
+			// region try to receive
+			received, err = stream.Recv()
+			if err == io.EOF {
+				resultErr <- nil
+				break
+			} else if err != nil {
+				resultErr <- fmt.Errorf("error receiving gRPC stream in_: %w", err)
+				break
+			}
+			// endregion
+
+			// 2) ctx - commandScopeCtx stores command ID and logger
+			var commandScopeCtx context.Context
+			commandScopeCtx, err = newCommandScopeCtx(context.Background())
+			if err != nil {
+				resultErr <- fmt.Errorf("failed to init logger: %w", err)
+				break
+			}
+
+			// 3) execute command async-ly
+			go func() {
+				// 3.1) try to execute
+				var returnEvent *r.Event
+				var ok bool
+				returnEvent, ok, err = s.processCommand(commandScopeCtx, received)
+				if err != nil {
+					// if failed, send error
+					logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "error processing command in stream", zap.Error(err))
+					s.sendErrorToStream(commandScopeCtx, stream, returnEvent, err)
+					return
+				}
+
+				// 3.2) send result if OK
+
+				err = retry.Do(func() error {
+					if ok {
+						return s.eventBus.EventToBus(commandScopeCtx, returnEvent)
+					}
+					// errors aren't sent into bus because why would one read them?
+					return stream.Send(returnEvent)
+				}, s.retryStrategy)
+
+				if err != nil {
+					// if failed to send, then try to send error about step 2
+					logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "failed to send event", zap.Error(err))
+					s.sendErrorToStream(commandScopeCtx, stream, returnEvent, err)
+				}
+			}()
+		}
+	}()
+
+	go func() {
+		var sendErr error
+
+		ctx, _ := logger.New(context.Background())
+
+		// loop incoming events
+		for e := range eventsToSendChan {
+			// try to send
+			sendErr = retry.Do(func() error { return stream.Send(e) }, s.retryStrategy)
+			if sendErr != nil {
+				// if failed to send, then try to send error
+				logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to send event", zap.Error(sendErr))
+				s.sendErrorToStream(ctx, stream, e, sendErr)
+			}
+		}
+	}()
+
+	<-resultErr
+
+	err = s.eventBus.UnsubscribeFromBus(subscription)
+	if err != nil {
+		return fmt.Errorf("failed to unsubscribe from events: %w", err)
+	}
+
+	return nil
 }
 
 // SingleCommand - is the handler for single command endpoint SingleCommand
@@ -93,7 +149,7 @@ func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r
 		return nil, fmt.Errorf("failed to init logger: %w", err)
 	}
 
-	returnEvent, err := s.processCommand(commandScopeCtx, command)
+	returnEvent, ok, err := s.processCommand(commandScopeCtx, command)
 	if err != nil {
 		// if failed, show (and later return) error
 		logger.GetLoggerFromCtx(commandScopeCtx).Error(commandScopeCtx, "error processing single command", zap.Error(err))
@@ -105,9 +161,18 @@ func (s *RoomService) SingleCommand(ctx context.Context, command *r.Command) (*r
 			roomID = *command.RoomId
 		}
 		returnEvent = quickErrorEvent(roomID, command.UserId, "internal error: returned event is nil!")
+
+		ok = false
 	}
 
-	return returnEvent, nil
+	if ok {
+		err = retry.Do(func() error { return s.eventBus.EventToBus(commandScopeCtx, returnEvent) }, s.retryStrategy)
+		if err != nil {
+			err = fmt.Errorf("failed to send to eventBus: %w", err)
+		}
+	}
+
+	return returnEvent, err
 }
 
 // RoomsList - get rooms list with no inner data and no users list

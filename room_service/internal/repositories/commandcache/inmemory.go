@@ -20,7 +20,7 @@ func NewInMemoryCommandCache() *InMemoryCommandCache {
 // Exists - check if commandID is already saved in Redis
 //
 // if it is, skip the command - it's already in execution (or finished)
-func (s *InMemoryCommandCache) Exists(ctx context.Context, commandID string) (bool, error) {
+func (s *InMemoryCommandCache) Exists(_ context.Context, commandID string) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_, ok := s.storage[commandID]
@@ -28,7 +28,7 @@ func (s *InMemoryCommandCache) Exists(ctx context.Context, commandID string) (bo
 }
 
 // Save - store commandID in Redis
-func (s *InMemoryCommandCache) Save(ctx context.Context, commandID string) error {
+func (s *InMemoryCommandCache) Save(_ context.Context, commandID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.storage[commandID] = struct{}{}

@@ -16,7 +16,7 @@ import (
 // setData - set data[data_id] = value in MongoDB
 //
 // if itemIndex != "" --> set data[data_id][itemIndex] = value
-func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, value *models.Value, itemIndex string) (*models.Value, error) {
+func (s *RoomsMongoDBRepository) setData(ctx context.Context, roomID, dataID string, value *models.Value, itemIndex string) (*models.Value, error) {
 	// Convert models.Value to BSON value
 	bsonValue, err := encodeModelValueToBSON(value)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *MongoDBRepository) setData(ctx context.Context, roomID, dataID string, 
 }
 
 // deleteData - delete data[data_id] from MongoDB
-func (s *MongoDBRepository) deleteData(ctx context.Context, roomID, dataID string) (*models.Value, error) {
+func (s *RoomsMongoDBRepository) deleteData(ctx context.Context, roomID, dataID string) (*models.Value, error) {
 	// check if "data" field exists
 	filter := bson.M{
 		"id": roomID,
@@ -104,7 +104,7 @@ func (s *MongoDBRepository) deleteData(ctx context.Context, roomID, dataID strin
 }
 
 // appendData - append value to data[data_id] (only array)
-func (s *MongoDBRepository) appendData(ctx context.Context, roomID, dataID string, value *models.Value) (*models.Value, error) {
+func (s *RoomsMongoDBRepository) appendData(ctx context.Context, roomID, dataID string, value *models.Value) (*models.Value, error) {
 	// models.Value to BSON
 	bsonValue, err := encodeModelValueToBSON(value)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *MongoDBRepository) appendData(ctx context.Context, roomID, dataID strin
 // removeData - remove item from data[data_id] by index/key
 //
 // if itemIndex != "" --> remove item data[data_id][itemIndex]
-func (s *MongoDBRepository) removeData(ctx context.Context, roomID, dataID string, itemIndex types2.NotEmptyText) (*models.Value, error) {
+func (s *RoomsMongoDBRepository) removeData(ctx context.Context, roomID, dataID string, itemIndex types2.NotEmptyText) (*models.Value, error) {
 	// check if data_id in "data" field exists
 	removedItemPath := fmt.Sprintf("%s.%s", roomDataField, dataID)
 

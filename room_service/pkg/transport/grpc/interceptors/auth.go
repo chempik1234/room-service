@@ -19,7 +19,7 @@ const (
 
 // apiKey is the configured API key for authentication
 // Set by SetAPIKey before starting the server
-var apiKey string = "apikey" // default for backwards compatibility
+var apiKey = "apikey" // default for backwards compatibility
 
 // SetAPIKey sets the API key for authentication
 func SetAPIKey(key string) {

@@ -34,15 +34,13 @@ func (s *RoomService) getValidRoomID(in *r.Command) (roomIDValidated *models.Roo
 	switch in.Payload.(type) {
 	case *r.Command_CreateRoom:
 		// skip, generate locally
-		break
 	default:
-		_roomIdParsed, err := types.NewUUID(in.GetRoomId())
+		_roomIDParsed, err := types.NewUUID(in.GetRoomId())
 		if err != nil {
 			return nil, fmt.Errorf("room id '%s' - invalid uuid", in.GetRoomId())
 		}
-		_v := models.RoomID(_roomIdParsed)
+		_v := models.RoomID(_roomIDParsed)
 		roomIDValidated = &_v
-		break
 	}
 
 	return roomIDValidated, nil
@@ -81,16 +79,16 @@ func (s *RoomService) getKickedUserID(leaveRoom *r.LeaveRoomCommandBody) (kicked
 func (s *RoomService) noRepeatCommandID(ctx context.Context, in *r.Command) (string, error) {
 	commandID := in.GetCommandId()
 	if len(commandID) > 0 {
-		commandIDExists, err := s.commandIdShortCache.Exists(ctx, commandID)
+		commandIDExists, err := s.commandIDShortCache.Exists(ctx, commandID)
 		if err != nil {
 			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to get command_id from short cache", zap.String(commandIDZapKey, commandID), zap.Error(err))
 			return "", fmt.Errorf("failed to get command_id from short cache: %w", err)
 		}
 		if commandIDExists {
-			logger.GetLoggerFromCtx(ctx).Info(ctx, "command_id exists in short cache, SKIPPED", zap.String(commandIDZapKey, commandID))
+			logger.GetLoggerFromCtx(ctx).Debug(ctx, "command_id exists in short cache, SKIPPED", zap.String(commandIDZapKey, commandID))
 			return "", fmt.Errorf("command_id '%s' exists in short cache, SKIPPED", commandID)
 		}
-		if s.commandIdShortCache.Save(ctx, in.CommandId) != nil {
+		if s.commandIDShortCache.Save(ctx, in.CommandId) != nil {
 			logger.GetLoggerFromCtx(ctx).Error(ctx, "failed to set command_id into short cache", zap.String(commandIDZapKey, commandID), zap.Error(err))
 		}
 	}
@@ -107,5 +105,5 @@ func quickErrorEvent(roomID string, userID string, message string) *r.Event {
 }
 
 func newCommandScopeCtx(ctx context.Context) (context.Context, error) {
-	return logger.New(context.WithValue(context.Background(), logger.KeyForRequestID, projectutils.GenerateRequestID()))
+	return logger.New(context.WithValue(ctx, logger.KeyForRequestID, projectutils.GenerateRequestID()))
 }

@@ -3,6 +3,7 @@ package roomservice
 import (
 	"context"
 	"fmt"
+	"github.com/chempik1234/room-service/internal/models"
 	"github.com/chempik1234/room-service/internal/ports"
 	r "github.com/chempik1234/room-service/pkg/api/room_service"
 	"github.com/chempik1234/super-danis-library-golang/v2/pkg/logger"
@@ -10,6 +11,7 @@ import (
 	"github.com/wb-go/wbf/retry"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"io"
 )
 
@@ -46,15 +48,49 @@ func NewRoomService(
 // Stream - is the handler for life-cycle endpoint Stream
 //
 // Incoming commands - output Events with deltas or full snapshots (e.g. on room join)
+// Use metadata "room-id" to optimize for single room:
+// - empty/missing "room-id" = all rooms (default)
+// - specific "room-id" = only that room, validates all commands match this room
+//
+// 1. get room-id filter
+// 2. subscribe to events
+//
+// 3. Read life cycle:
+// 1) receive object
+// 2) validate room ID matches metadata filter (if set)
+// 3) ctx - commandScopeCtx stores command ID and logger
+// 4) execute command async-ly
+// 4.1) try to execute (if failed, send error)
+// 4.2) send result if OK (if failed to send, then try to send error about step 2)
+//
+// 4. Write life cycle:
+// 1) receive event from event bus
+// 2) get only related to selected room if any (defined on stream creating)
 func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]) error {
 	var received *r.Command
 
 	resultErr := make(chan error)
 
-	eventsToSendChan, subscription, err := s.eventBus.SubscribeToBusAllRooms()
+	// Check metadata for room-specific streaming
+	roomIDFilter, err := getRoomIDFilterForStream(stream.Context())
 	if err != nil {
-		return fmt.Errorf("failed to subscribe to existing events => won't care to accept new ones; error: %w", err)
+		return err // already wrapped
 	}
+
+	//region Subscribe to appropriate events channel
+	var eventsToSendChan chan ports.GrpcEvent
+	var subscription any
+
+	if roomIDFilter == nil {
+		eventsToSendChan, subscription, err = s.eventBus.SubscribeToBusAllRooms()
+	} else {
+		eventsToSendChan, subscription, err = s.eventBus.SubscribeToBusSpecificRoom(*roomIDFilter)
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to subscribe to event bus: %w", err)
+	}
+	//endregion
 
 	// we don't quit, until reading is stopped
 	go func() {
@@ -73,7 +109,19 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 			}
 			// endregion
 
-			// 2) ctx - commandScopeCtx stores command ID and logger
+			// 2) validate room ID matches metadata filter (if set)
+			if roomIDFilter != nil {
+				if received.RoomId == nil {
+					resultErr <- fmt.Errorf("command has no room_id but metadata room-id is set to '%s'", roomIDFilter.String())
+					break
+				}
+				if *received.RoomId != roomIDFilter.String() {
+					resultErr <- fmt.Errorf("command room_id '%s' doesn't match metadata room-id '%s'", *received.RoomId, roomIDFilter.String())
+					break
+				}
+			}
+
+			// 3) ctx - commandScopeCtx stores command ID and logger
 			var commandScopeCtx context.Context
 			commandScopeCtx, err = newCommandScopeCtx(context.Background())
 			if err != nil {
@@ -81,9 +129,9 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 				break
 			}
 
-			// 3) execute command async-ly
+			// 4) execute command async-ly
 			go func() {
-				// 3.1) try to execute
+				// 4.1) try to execute
 				var returnEvent *r.Event
 				var ok bool
 				returnEvent, ok, err = s.processCommand(commandScopeCtx, received)
@@ -94,7 +142,7 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 					return
 				}
 
-				// 3.2) send result if OK
+				// 4.2) send result if OK
 
 				err = retry.Do(func() error {
 					if ok {
@@ -138,6 +186,21 @@ func (s *RoomService) Stream(stream grpc.BidiStreamingServer[r.Command, r.Event]
 	}
 
 	return nil
+}
+
+func getRoomIDFilterForStream(ctx context.Context) (*models.RoomID, error) {
+	var roomIDFilter *models.RoomID
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if roomIDs := md.Get("room-id"); len(roomIDs) > 0 && roomIDs[0] != "" {
+			roomID, err := types.NewUUID(roomIDs[0])
+			if err != nil {
+				return nil, fmt.Errorf("invalid room-id in metadata: %w", err)
+			}
+			convertedRoomID := models.RoomID(roomID)
+			roomIDFilter = &convertedRoomID
+		}
+	}
+	return roomIDFilter, nil
 }
 
 // SingleCommand - is the handler for single command endpoint SingleCommand
